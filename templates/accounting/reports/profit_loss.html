@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Profit & Loss Report</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'accounting_reports' %}">Reports</a></li>
+            <li class="breadcrumb-item">Profit & Loss</li>
+        </ul>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="card">
+        <div class="card-header">
+            <h5>Profit & Loss Report</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">From Date</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">To Date</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>REVENUE</strong></td>
+                            <td class="text-end"><strong>${{ total_revenue|floatformat:2 }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>EXPENSES</strong></td>
+                            <td class="text-end"><strong>-${{ total_expenses|floatformat:2 }}</strong></td>
+                        </tr>
+                        <tr class="table-{% if net_profit >= 0 %}success{% else %}danger{% endif %}">
+                            <td><strong>NET PROFIT/LOSS</strong></td>
+                            <td class="text-end"><strong>${{ net_profit|floatformat:2 }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

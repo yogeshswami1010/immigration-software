@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Email Templates</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Email Templates</li>
+        </ul>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Email Templates</h5>
+                </div>
+                <div class="card-body">
+                    {% for template in templates %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6>{{ template.get_template_type_display }}</h6>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="template_id" value="{{ template.id }}">
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Subject</label>
+                                    <input type="text" name="subject" class="form-control" value="{{ template.subject }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Body</label>
+                                    <textarea name="body" class="form-control" rows="10" required>{{ template.body }}</textarea>
+                                    <small class="text-muted">You can use variables: {{invoice_number}}, {{customer_name}}, {{total_amount}}, {{due_date}}</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="is_active" class="form-check-input" id="active_{{ template.id }}" {% if template.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="active_{{ template.id }}">Active</label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Save Template</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p>No email templates found. They will be created automatically.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

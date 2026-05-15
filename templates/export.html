@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<!-- [ page-header ] start -->
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Reports</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Reports</li>
+        </ul>
+    </div>
+</div>
+<!-- [ page-header ] end -->
+<!-- [ Main Content ] start -->
+<div class="main-content" style="min-height: 70vh;">
+    <div class="row">
+
+        <div class="col-lg-12">
+            <div class="card stretch stretch-full">
+                <div class="card-body">
+                    <form method="POST" action="{% url 'export_applicants' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-3 mt-2">
+                                <label>Select Applicant Status</label>
+                                <select class="form-control" name="search_application_status" id="search_application_status">
+                                    <option value="">Select Application Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="submitted">Submitted/Complete</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mt-2">
+                                <label>Start date</label>
+                                <input type="date" class="form-control" id="report_start_date" name="report_start_date" max="{{ today }}">
+                            </div>
+                            <div class="col-md-4 mt-2">
+                                <label>End date</label>
+                                <input type="date" class="form-control" id="report_end_date" name="report_end_date">
+                            </div>
+                            <div class="col-md-4 mt-2">
+                                <label>Caseworker</label>
+                                <select class="form-control" name="report_caseworker" id="report_caseworker">
+                                    <option value="">Select Caseworker</option>
+                                    {% for worker in caseworkers %}
+                                    <option value="{{ worker.user.id }}">
+                                        {{ worker.user.first_name }} {{ worker.user.last_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-12 mt-2" align="center">
+                                <button type="submit" class="btn btn-primary">Export</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        // Additional JS can be added here if needed
+    });
+</script>
+{% endblock %}

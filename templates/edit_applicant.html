@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<!-- [ page-header ] start -->
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Dashboard</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Edit Applicant</li>
+        </ul>
+    </div>
+</div>
+<!-- [ page-header ] end -->
+<!-- [ Main Content ] start -->
+<div class="main-content pb-5" style="min-height: 70vh;">
+
+    <div class="row">
+        {% for field in applicant_fields %}
+        <div class="col-md-4 mt-2">
+            <label>{{ field.label }}</label>
+            {% if field.type == "textarea" %}
+                <textarea readonly class="form-control">{{ field.value }}</textarea>
+            {% else %}
+                <input readonly type="{{ field.type }}" class="form-control" value="{{ field.value }}">
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    <form method="post" action="{% url 'edit_applicant' applicant.id %}">
+    {% csrf_token %}
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Biometrics & Medical</h3>
+            </div>
+            <div class="col-md-4 mt-2">
+                <input type="checkbox" id="service_agreement_check" name="service_agreement_check" {% if applicant.service_agreement_check %}checked{% endif %}>
+                <label for="service_agreement_check">Is Service Agreement Signed?</label>
+            </div>
+            {% for field in select_fields %}
+            <div class="col-md-4 mt-2">
+                <label for="{{ field.name }}">{{ field.label }}</label>
+                <select name="{{ field.name }}" id="{{ field.name }}" class="form-control">
+                    <option value="" disabled {% if not field.value %}selected{% endif %}></option>
+                    {% for option in field.options %}
+                    <option value="{{ option.value }}" {% if field.value == option.value %}selected{% endif %}>
+                        {{ option.display }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Documents Received</h3>
+            </div>
+            {% for assignment in checklist_assignments %}
+            <div class="col-md-3 mt-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="checklists" value="{{ assignment.id }}" id="checklist_{{ assignment.id }}"  {% if applicant.ready_to_review %}onclick="return false;"{% endif %} {% if assignment.completed %}checked{% endif %}>
+                    <label class="form-check-label" for="checklist_{{ assignment.id }}">
+                        {{ assignment.item.name }}
+                    </label>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Comments</h3>
+            </div>
+            <div class="col-md-12">
+                {% for comment in comments %}
+                <div class="mb-2">
+                    <textarea class="form-control" disabled>
+     {{comment.added_at}}
+     {{ comment.added_by.first_name }}: {{ comment.comment }}</textarea>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if not applicant.is_backedout %}
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-12">
+                        <label>Add New Comment</label>
+                        <textarea name="add_comment" id="add_comment" {% if applicant.ready_to_review %}{% if request.user.profile.role == 'caseworker' or request.user.profile.role == 'frontdesk' %} disabled{% endif %}{% endif %} class="form-control"></textarea>
+                    </div>
+                {% if not applicant.submitted %}
+                    <hr style="margin-top: 15px;">
+                    <div class="col-md-12">
+                        <input type="checkbox" name="ready_to_review" id="ready_to_review" {% if applicant.ready_to_review %}checked {% if request.user.profile.role == 'caseworker' or request.user.profile.role == 'frontdesk' %}disabled{% endif %}{% endif %}>
+                        <label for="ready_to_review">Is Application Ready for Review?</label>
+                    </div>
+                    {% if request.user.profile.role == "manager" or request.user.profile.role == "admin" %}
+                        <hr style="margin-top: 15px;">
+                        <div class="col-md-12">
+                            <input type="checkbox" name="backed_out" id="backed_out">
+                            <label for="backed_out">Has applicant backed out?</label>
+                        </div>
+                        {% if applicant.ready_to_review %}
+                        <hr style="margin-top: 15px;">
+                        <div class="col-md-12">
+                            <input type="checkbox" name="ready_to_submit" id="ready_to_submit" {% if applicant.ready_to_submit %}checked disabled{% endif %}>
+                            <label for="ready_to_submit">Is Application Ready to Submit?</label>
+                        </div>
+                        {% endif %}
+                        {% if applicant.ready_to_submit %}
+                        <hr style="margin-top: 15px;">
+                        <div class="col-md-3">
+                            <input type="checkbox" name="submitted" id="submitted" {% if applicant.submitted %}checked disabled{% endif %}>
+                            <label for="submitted">Is Application Submitted?</label>
+                        </div>
+                        <div class="col-md-4 {% if not applicant.submitted %}d-none{% endif %}" id="application_number_div">
+                            <label for="application_number">Application Number</label>
+                            <input type="text" class="form-control" name="application_number" id="application_number" {% if applicant.application_number %}value="{{applicant.application_number}}" disabled{% endif %}>
+                        </div>
+                        <div class="col-md-4 {% if not applicant.submitted %}d-none{% endif %}" id="uci_number_div">
+                            <label for="uci_number">UCI Number</label>
+                            <input type="text" class="form-control" name="uci_number" id="uci_number" {% if applicant.uci_number %}value="{{applicant.uci_number}}" disabled{% endif %}>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <hr style="margin-top: 15px;">
+                    <div class="col-md-4">
+                        <label for="approval">Is Application Approved?</label>
+                        <select name="approval" id="approval" {% if applicant.is_approved or applicant.is_rejected %}disabled{% endif %} class="form-control">
+                            <option value="" selected disabled></option>
+                            <option value="approved" {% if applicant.is_approved %}selected{% endif %}>Approved</option>
+                            <option value="rejected" {% if applicant.is_rejected %}selected{% endif %}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 {% if not applicant.application_expiry %}d-none{% endif %}" id="application_expiry_div">
+                        <label for="application_expiry">Application/Visa Expiry</label>
+                        {% if applicant.application_expiry %}
+                        <input type="text" class="form-control"  value="{{applicant.application_expiry}}" disabled>
+                        {% else %}
+                        <input type="date" class="form-control" name="application_expiry" id="application_expiry">
+                        {% endif %}
+                    </div>
+                {% endif %}
+                    <div class="col-md-12 mt-2" align="center">
+                        <button class="btn btn-success" type="submit">Update</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+</div>
+<!-- [ Main Content ] end -->
+{% endblock %}
+
+{% block script %}
+{% if request.user.profile.role == 'caseworker' or request.user.profile.role == 'frontdesk' %}
+<script>
+    document.getElementById('ready_to_review').addEventListener('change', function() {
+        if (this.checked) {
+            if (!confirm("Are you sure? Once marked, this cannot be edited again.")) {
+                this.checked = false; // Uncheck if user cancels the confirmation
+            }
+        }
+    });
+</script>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    function toggleFieldVisibility(checkbox, targetDiv, targetInput) {
+        const isChecked = checkbox.checked || checkbox.value === 'approved';
+        targetDiv.classList.toggle('d-none', !isChecked);
+        targetInput.toggleAttribute('required', isChecked);
+    }
+
+    const approvalElement = document.getElementById('approval');
+    if (approvalElement) {
+        approvalElement.addEventListener('change', function () {
+            toggleFieldVisibility(this, document.getElementById('application_expiry_div'), document.getElementById('application_expiry'));
+        });
+    }
+
+    const submittedElement = document.getElementById('submitted');
+    if (submittedElement) {
+        submittedElement.addEventListener('change', function () {
+            toggleFieldVisibility(this, document.getElementById('application_number_div'), document.getElementById('application_number'));
+            toggleFieldVisibility(this, document.getElementById('uci_number_div'), document.getElementById('uci_number'));
+        });
+    }
+});
+</script>
+{% endblock %}

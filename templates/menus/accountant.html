@@ -1,0 +1,50 @@
+<div class="navbar-content">
+    <ul class="nxl-navbar">
+        <li class="nxl-item nxl-caption">
+            <label>Navigation</label>
+        </li>
+        <li class="nxl-item ">
+            <a href="/dashboard" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-airplay"></i>
+                </span>
+                <span class="nxl-mtext">Dashboard</span>
+            </a>
+        </li>
+        <li class="nxl-item nxl-hasmenu">
+            <a href="javascript:void(0);" class="nxl-link">
+                <span class="nxl-micon"><i class="feather-send"></i></span>
+                <span class="nxl-mtext">Applications</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+            </a>
+            <ul class="nxl-submenu">
+                <li class="nxl-item"><a class="nxl-link" href="/pending-applications">Pending Applications</a></li>
+                <li class="nxl-item"><a class="nxl-link" href="/search-applications">Search Applications</a></li>
+            </ul>
+        </li>
+        <li class="nxl-item ">
+            <a href="/services" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-briefcase"></i>
+                </span>
+                <span class="nxl-mtext">Services</span>
+            </a>
+        </li>
+        {% include 'menus/accounting_urls.html' %}
+        <li class="nxl-item ">
+            <a href="/settings" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-settings"></i>
+                </span>
+                <span class="nxl-mtext">Settings</span>
+            </a>
+        </li>
+        <li class="nxl-item ">
+            <a href="\logout" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-log-out"></i>
+                </span>
+                <span class="nxl-mtext">Logout</span>
+            </a>
+        </li>
+    </ul>
+</div>

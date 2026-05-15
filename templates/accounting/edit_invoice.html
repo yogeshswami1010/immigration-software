@@ -1,0 +1,1179 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<style>
+    .invoice-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: #fff;
+    }
+
+    .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .invoice-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+    }
+
+    .invoice-header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .business-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .business-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        cursor: pointer;
+    }
+
+    .business-section-header h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        color: #495057;
+    }
+
+    .business-section-header .collapse-icon {
+        transition: transform 0.3s;
+    }
+
+    .business-section-header.collapsed .collapse-icon {
+        transform: rotate(180deg);
+    }
+
+    .business-info {
+        display: flex;
+        gap: 30px;
+    }
+
+    .business-logo {
+        width: 150px;
+    }
+
+    .business-logo img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .business-details {
+        flex: 1;
+    }
+
+    .business-details .form-group {
+        margin-bottom: 15px;
+    }
+
+    .business-details label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .business-details input[type="text"] {
+        font-size: 24px;
+        font-weight: 600;
+        border: none;
+        border-bottom: 2px solid #e9ecef;
+        padding: 5px 0;
+        width: 100%;
+    }
+
+    .business-details input[type="text"]:focus {
+        outline: none;
+        border-bottom-color: #0d6efd;
+    }
+
+    .business-contact {
+        font-size: 13px;
+        color: #6c757d;
+        line-height: 1.6;
+        margin-top: 15px;
+    }
+
+    .customer-invoice-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    .customer-box {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .customer-box:hover {
+        border-color: #0d6efd;
+        background: #f8f9fa;
+    }
+
+    .customer-box.selected {
+        border-color: #0d6efd;
+        background: #e7f1ff;
+    }
+
+    .customer-box i {
+        font-size: 32px;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+
+    .customer-box.selected i {
+        color: #0d6efd;
+    }
+
+    .customer-box span {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .customer-box.selected span {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+
+    .customer-box.error {
+        border-color: #dc3545;
+        background: #fff5f5;
+    }
+
+    .customer-box.error i,
+    .customer-box.error span {
+        color: #dc3545;
+    }
+
+    .invoice-details-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .invoice-details-form .form-group {
+        margin-bottom: 0;
+    }
+
+    .invoice-details-form label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .invoice-details-form input,
+    .invoice-details-form select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .invoice-number-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .invoice-number-group input {
+        flex: 1;
+    }
+
+    .invoice-number-group .auto-gen-toggle {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+    .items-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .items-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .column-visibility-controls {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .column-visibility-controls label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #495057;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .column-visibility-controls input[type="checkbox"] {
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .column-visibility-controls .control-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        margin-right: 5px;
+    }
+
+    .items-table th[data-column],
+    .items-table td[data-column] {
+        transition: all 0.3s ease;
+    }
+
+    .items-table th[data-column].hidden,
+    .items-table td[data-column].hidden {
+        display: none;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+
+    .items-table thead {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .items-table th {
+        padding: 12px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+
+    .items-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .items-table input,
+    .items-table select {
+        width: 100%;
+        border: 1px solid #e9ecef;
+        padding: 8px;
+        font-size: 14px;
+        border-radius: 4px;
+    }
+
+    .items-table input:focus,
+    .items-table select:focus {
+        outline: 2px solid #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .items-table .select2-container {
+        width: 100% !important;
+    }
+
+    .add-item-btn {
+        margin-top: 15px;
+        background: none;
+        border: none;
+        color: #0d6efd;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 8px 0;
+    }
+
+    .add-item-btn:hover {
+        text-decoration: underline;
+    }
+
+    .add-item-btn:disabled {
+        color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .add-item-btn i {
+        margin-right: 5px;
+    }
+
+    .summary-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .summary-box {
+        width: 300px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+    }
+
+    .summary-row.total {
+        border-top: 2px solid #dee2e6;
+        margin-top: 10px;
+        padding-top: 15px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .summary-row.amount-due {
+        border-top: 2px solid #dee2e6;
+        margin-top: 10px;
+        padding-top: 15px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #0d6efd;
+    }
+
+    .notes-section,
+    .footer-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        cursor: pointer;
+    }
+
+    .section-header h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        color: #495057;
+    }
+
+    .section-header .collapse-icon {
+        transition: transform 0.3s;
+    }
+
+    .section-header.collapsed .collapse-icon {
+        transform: rotate(180deg);
+    }
+
+    .notes-section textarea,
+    .footer-section textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+    }
+
+    .invoice-footer {
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .remove-item-btn {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0 5px;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .remove-item-btn:hover:not(:disabled) {
+        color: #c82333;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .remove-item-btn:disabled {
+        color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .currency-select {
+        display: inline-block;
+        margin-left: 10px;
+    }
+
+    .line-amount {
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .field-disabled {
+        opacity: 0.6;
+        pointer-events: none;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+{% block main %}
+
+<div class="invoice-container">
+    <form method="post" id="invoiceForm" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if invoice.status == 'sent' or invoice.payments.exists %}
+        <div class="alert alert-warning" style="margin: 20px 30px;">
+            <strong>Note:</strong> {% if invoice.status == 'sent' %}This invoice has been sent and cannot be edited.{% else %}This invoice has recorded payments. Items and amounts cannot be edited.{% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Invoice Header -->
+        <div class="invoice-header">
+            <h1>Edit invoice</h1>
+            <div class="invoice-header-actions">
+                <a href="{% url 'accounting_invoice_preview' invoice.id %}" target="_blank" class="btn btn-outline-secondary" id="previewBtn">Preview</a>
+                <button type="submit" class="btn btn-primary">Save and continue <i
+                        class="feather-chevron-down"></i></button>
+            </div>
+        </div>
+
+        <!-- Business Address and Contact Details Section -->
+        <div class="business-section">
+            <div class="business-section-header" data-toggle="collapse" data-target="#businessSection">
+                <h3>Business Address and Contact Details, Title, Summary, and Logo</h3>
+                <i class="feather-chevron-up collapse-icon"></i>
+            </div>
+            <div id="businessSection" class="collapse show">
+                <div class="business-info">
+                    <div class="business-logo">
+                        {% if business.logo %}
+                        <img src="{{ business.logo.url }}" alt="Company Logo"
+                            style="max-width: 150px; max-height: 150px; object-fit: contain;">
+                        {% else %}
+                        <div
+                            style="background: #f8f9fa; padding: 20px; border-radius: 4px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center;">
+                            <span style="color: #6c757d; font-size: 12px;">No Logo</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="business-details">
+                        <div class="form-group">
+                            <label>Invoice</label>
+                            <input type="text" name="title" value="{{ invoice.title|default:'Invoice' }}" placeholder="Invoice">
+                        </div>
+                        <div class="form-group">
+                            <label>Summary (e.g. project name, description of invoice)</label>
+                            <input type="text" name="summary" value="{{ invoice.summary|default:'' }}" placeholder="Summary">
+                        </div>
+                        <div class="business-contact">
+                            <strong>{{ business.name }}</strong><br>
+                            {{ business.address_line1 }}<br>
+                            {% if business.address_line2 %}{{ business.address_line2 }}<br>{% endif %}
+                            {{ business.city }}, {{ business.province }} {{ business.postal_code }}<br>
+                            {{ business.country }}<br>
+                            {% if business.phone %}Phone: {{ business.phone }}<br>{% endif %}
+                            {% if business.mobile %}Mobile: {{ business.mobile }}<br>{% endif %}
+                            {% if business.website %}{{ business.website }}{% endif %}
+                        </div>
+                        <a href="{% url 'accounting_invoice_settings' %}"
+                            style="font-size: 12px; color: #0d6efd; margin-top: 10px; display: inline-block;">Edit your
+                            business address and contact details.</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applicant and Invoice Details Section -->
+        <div class="customer-invoice-section">
+            <div class="customer-box {% if invoice.applicant %}selected{% endif %}" id="customerBox" onclick="document.getElementById('applicantSelect').focus()">
+                <i class="feather-user"></i>
+                <span id="customerText">
+                    {% if invoice.applicant %}
+                        {{ invoice.applicant.f_name }} {% if invoice.applicant.m_name %}{{ invoice.applicant.m_name }} {% endif %}{{ invoice.applicant.l_name }} ({{ invoice.applicant.client_id }})
+                    {% else %}
+                        Add an applicant
+                    {% endif %}
+                </span>
+            </div>
+            <div class="invoice-details-form">
+                <div class="form-group">
+                    <label>Invoice number</label>
+                    <div class="invoice-number-group">
+                        <input type="text" name="invoice_number" id="invoiceNumber" value="{{ invoice.invoice_number }}" required readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>P.O./S.O. number</label>
+                    <input type="text" name="po_number" value="{{ invoice.po_number|default:'' }}" placeholder="P.O./S.O. number">
+                </div>
+                <div class="form-group">
+                    <label>Invoice date</label>
+                    <input type="date" name="invoice_date" value="{{ invoice.invoice_date|date:'Y-m-d' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Payment due</label>
+                    <input type="date" name="due_date" id="dueDate" value="{{ invoice.due_date|date:'Y-m-d' }}" required>
+                </div>
+            </div>
+        </div>
+        <select name="applicant" id="applicantSelect" required style="display: none;">
+            <option value="">Select Applicant</option>
+            {% for applicant in applicants %}
+            <option value="{{ applicant.id }}" {% if invoice.applicant.id == applicant.id %}selected{% endif %}>
+                {{ applicant.f_name }} {{ applicant.l_name }} ({{ applicant.client_id }}){% if applicant.email %} - {{ applicant.email }}{% endif %}
+            </option>
+            {% endfor %}
+        </select>
+
+        <!-- Items Section -->
+        <div class="items-section">
+            <div class="column-visibility-controls">
+                <span class="control-label">Show Columns:</span>
+                <label>
+                    <input type="checkbox" id="toggleItems" checked disabled>
+                    <span>Items</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleQuantity" {% if show_quantity %}checked{% endif %}>
+                    <span>Quantity</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="togglePrice" checked>
+                    <span>Price</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleAmount" checked disabled>
+                    <span>Amount</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleTaxable" checked>
+                    <span>Taxable</span>
+                </label>
+            </div>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th data-column="items">Items</th>
+                        <th data-column="quantity"{% if not show_quantity %} class="hidden"{% endif %}>Quantity</th>
+                        <th data-column="price">Price</th>
+                        <th data-column="amount">Amount</th>
+                        <th data-column="taxable">Taxable</th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    {% for item in invoice.items.all %}
+                    <tr class="item-row">
+                        <td data-column="items">
+                            <input type="hidden" name="item_id[]" value="{{ item.id }}">
+                            <input type="text" name="service_name[]" class="service-name form-control" value="{% if item.service %}{{ item.service.name }}{% else %}{{ item.description }}{% endif %}" {% if invoice.payments.exists %}readonly{% endif %}>
+                            <input type="hidden" name="service[]" class="service-id" value="{% if item.service %}{{ item.service.id }}{% endif %}">
+                        </td>
+                        <td data-column="quantity"{% if not show_quantity %} class="hidden"{% endif %}>
+                            <input type="number" name="quantity[]" class="quantity" value="{{ item.quantity }}" step="0.01" min="0.01"
+                                {% if invoice.status == 'sent' or invoice.payments.exists %}disabled{% endif %} required>
+                        </td>
+                        <td data-column="price">
+                            <input type="number" name="unit_price[]" class="unit-price" value="{{ item.unit_price }}" step="0.01" min="0"
+                                {% if invoice.status == 'sent' or invoice.payments.exists %}disabled{% endif %} required>
+                        </td>
+                        <td data-column="amount">
+                            <span class="line-amount">${{ item.line_total|floatformat:2 }}</span>
+                        </td>
+                        <td data-column="taxable" style="text-align: center;">
+                            <input type="hidden" name="is_taxable[]" class="is-taxable" value="{% if item.is_taxable %}1{% else %}0{% endif %}">
+                            <input type="checkbox" class="taxable-checkbox" title="Apply tax to this line" {% if item.is_taxable %}checked{% endif %} {% if invoice.payments.exists %}disabled{% endif %}>
+                        </td>
+                        <td>
+                            <button type="button" class="remove-item-btn" {% if invoice.payments.exists %}disabled{% endif %}>×</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="item-row">
+                        <td data-column="items">
+                            <input type="hidden" name="item_id[]" value="">
+                            <input type="text" name="service_name[]" class="service-name form-control" placeholder="Enter service/item name">
+                            <input type="hidden" name="service[]" class="service-id" value="">
+                        </td>
+                        <td data-column="quantity"{% if not show_quantity %} class="hidden"{% endif %}>
+                            <input type="number" name="quantity[]" class="quantity" value="1" step="0.01" min="0.01" required>
+                        </td>
+                        <td data-column="price">
+                            <input type="number" name="unit_price[]" class="unit-price" step="0.01" min="0" required>
+                        </td>
+                        <td data-column="amount">
+                            <span class="line-amount">$0.00</span>
+                        </td>
+                        <td data-column="taxable" style="text-align: center;">
+                            <input type="hidden" name="is_taxable[]" class="is-taxable" value="0">
+                            <input type="checkbox" class="taxable-checkbox" title="Apply tax to this line">
+                        </td>
+                        <td>
+                            <button type="button" class="remove-item-btn">×</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="button" class="add-item-btn" id="addItem" {% if invoice.payments.exists %}disabled{% endif %}>
+                <i class="feather-plus"></i> Add an Item
+            </button>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span id="subtotal">${{ invoice.subtotal|floatformat:2 }}</span>
+                </div>
+                {% if invoice.discount_amount and invoice.discount_amount > 0 %}
+                <div class="summary-row" id="discountRow">
+                    <span>Discount:</span>
+                    <span>
+                        <input type="number" id="discountAmount" name="discount_amount"
+                            class="form-control form-control-sm"
+                            style="display: inline-block; width: 100px; margin-left: 10px;" step="0.01" min="0"
+                            value="{{ invoice.discount_amount }}" {% if invoice.payments.exists %}disabled{% endif %}>
+                        <select id="discountType" name="discount_type" class="form-select form-select-sm"
+                            style="display: inline-block; width: 80px; margin-left: 5px;" {% if invoice.payments.exists %}disabled{% endif %}>
+                            <option value="amount" {% if not invoice.discount_amount or invoice.discount_amount == invoice.subtotal|floatformat:0 %}selected{% endif %}>$</option>
+                            <option value="percent" {% if invoice.discount_amount and invoice.discount_amount != invoice.subtotal|floatformat:0 %}selected{% endif %}>%</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-link text-danger" id="removeDiscount"
+                            style="margin-left: 5px;" {% if invoice.payments.exists %}disabled{% endif %}>×</button>
+                    </span>
+                </div>
+                <div class="summary-row" id="addDiscountRow" style="display: none;">
+                    <a href="#" id="addDiscount" style="color: #0d6efd; text-decoration: none;">
+                        <i class="feather-plus"></i> Add a discount
+                    </a>
+                </div>
+                {% else %}
+                <div class="summary-row" id="discountRow" style="display: none;">
+                    <span>Discount:</span>
+                    <span>
+                        <input type="number" id="discountAmount" name="discount_amount"
+                            class="form-control form-control-sm"
+                            style="display: inline-block; width: 100px; margin-left: 10px;" step="0.01" min="0"
+                            value="0" {% if invoice.payments.exists %}disabled{% endif %}>
+                        <select id="discountType" name="discount_type" class="form-select form-select-sm"
+                            style="display: inline-block; width: 80px; margin-left: 5px;" {% if invoice.payments.exists %}disabled{% endif %}>
+                            <option value="amount">$</option>
+                            <option value="percent">%</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-link text-danger" id="removeDiscount"
+                            style="margin-left: 5px;" {% if invoice.payments.exists %}disabled{% endif %}>×</button>
+                    </span>
+                </div>
+                <div class="summary-row" id="addDiscountRow">
+                    <a href="#" id="addDiscount" style="color: #0d6efd; text-decoration: none;" {% if invoice.payments.exists %}onclick="return false;"{% endif %}>
+                        <i class="feather-plus"></i> Add a discount
+                    </a>
+                </div>
+                {% endif %}
+                <div class="summary-row">
+                    <span>Tax:</span>
+                    <span>
+                        <select name="tax_slab" id="invoiceTaxSlab" class="form-select form-select-sm"
+                            style="display: inline-block; width: 150px; margin-left: 10px;" {% if invoice.payments.exists %}disabled{% endif %}>
+                            <option value="" data-rate="0">No Tax</option>
+                            {% for tax in tax_slabs %}
+                            <option value="{{ tax.id }}" data-rate="{{ tax.rate }}" {% if invoice.tax_rate == tax.rate %}selected{% endif %}>
+                                {{ tax.name }} ({{ tax.rate }}%)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </span>
+                </div>
+                <div class="summary-row" id="taxRow" {% if not invoice.tax_amount or invoice.tax_amount == 0 %}style="display: none;"{% endif %}>
+                    <span>Tax Amount:</span>
+                    <span id="taxAmount">${{ invoice.tax_amount|floatformat:2 }}</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total:</span>
+                    <span>
+                        <span id="total">${{ invoice.total_amount|floatformat:2 }}</span>
+                        <select name="currency" class="currency-select form-select form-select-sm"
+                            style="display: inline-block; width: auto; margin-left: 10px;">
+                            <option value="CAD">CAD ($) - Canadian dollar</option>
+                            <option value="USD">USD ($) - US dollar</option>
+                        </select>
+                    </span>
+                </div>
+                <div class="summary-row amount-due">
+                    <span>Amount Due:</span>
+                    <span id="amountDue">${{ invoice.get_balance|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes/Terms Section -->
+        <div class="notes-section">
+            <div class="section-header">
+                <h3>Notes / Terms</h3>
+            </div>
+            <textarea name="notes"
+                placeholder="Enter notes or terms of service that are visible to your customer.">{% if invoice.notes %}{{ invoice.notes }}{% elif business.default_notes_terms %}{{ business.default_notes_terms }}{% endif %}</textarea>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="footer-section">
+            <div class="section-header" data-toggle="collapse" data-target="#footerSection">
+                <h3>Footer</h3>
+                <i class="feather-chevron-up collapse-icon"></i>
+            </div>
+            <div id="footerSection" class="collapse show">
+                <textarea name="footer"
+                    placeholder="Enter a footer for this invoice (e.g. tax information, thank you note).">{% if invoice.footer %}{{ invoice.footer }}{% elif business.default_footer %}{{ business.default_footer }}{% endif %}</textarea>
+            </div>
+        </div>
+
+        <!-- Invoice Footer -->
+        <div class="invoice-footer">
+            <div></div>
+            <div class="invoice-header-actions">
+                <a href="{% url 'accounting_invoice_preview' invoice.id %}" target="_blank" class="btn btn-outline-secondary" id="previewBtnBottom">Preview</a>
+                <button type="submit" class="btn btn-primary">Save and continue <i
+                        class="feather-chevron-down"></i></button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Applicant Selection Modal -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select Applicant</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="customerSearch" placeholder="Search applicants...">
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <select name="applicant_select" id="customerSelectModal" class="form-select" size="10"
+                        style="border: none;">
+                        <option value="">-- Select Applicant --</option>
+                        {% for applicant in applicants %}
+                        <option value="{{ applicant.id }}"
+                                data-name="{{ applicant.f_name }} {{ applicant.l_name }}"
+                                data-email="{{ applicant.email }}"
+                                {% if invoice.applicant.id == applicant.id %}selected{% endif %}>
+                            {{ applicant.f_name }} {{ applicant.l_name }} ({{ applicant.client_id }}){% if applicant.email %} - {{ applicant.email }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="selectCustomerBtn">Select</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    // Prevent dashboard-init from running on this page
+    if (typeof window.dashboardInit !== 'undefined') {
+        window.dashboardInit = function () { };
+    }
+
+    $(document).ready(function () {
+        var hasPayments = {% if invoice.payments.exists %}true{% else %}false{% endif %};
+        var isSent = {% if invoice.status == 'sent' %}true{% else %}false{% endif %};
+        var isEditable = !hasPayments && !isSent;
+        
+        // Cache a clean HTML template of the first item row BEFORE any JS plugins modify it
+        var itemRowTemplateHtml = $('#itemsTableBody').find('.item-row').first().prop('outerHTML');
+        
+        // Disable form fields if payments exist
+        if (hasPayments) {
+            $('.items-section input, .items-section select, .items-section button').not('.column-visibility-controls input').addClass('field-disabled');
+        }
+
+        // Set default due date based on invoice date and default due days
+        var defaultDueDays = {{ business.default_due_days|default_if_none:30 }};
+
+        $('input[name="invoice_date"]').on('change', function () {
+            var invoiceDate = new Date($(this).val());
+            var dueDate = new Date(invoiceDate);
+            dueDate.setDate(dueDate.getDate() + defaultDueDays);
+            $('#dueDate').val(dueDate.toISOString().split('T')[0]);
+        });
+
+        // Collapse functionality
+        $('.business-section-header, .section-header[data-toggle="collapse"]').on('click', function () {
+            $(this).toggleClass('collapsed');
+        });
+
+        // Customer selection
+        $('#customerBox').on('click', function () {
+            $('#customerModal').modal('show');
+            $('#customerBox').removeClass('error');
+        });
+
+        $('#customerSearch').on('keyup', function () {
+            var search = $(this).val().toLowerCase();
+            $('#customerSelectModal option').each(function () {
+                var text = $(this).text().toLowerCase();
+                if (text.indexOf(search) > -1) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
+        $('#selectCustomerBtn').on('click', function () {
+            var selected = $('#customerSelectModal option:selected');
+            if (selected.val()) {
+                $('#customerSelect').val(selected.val());
+                $('#customerText').text(selected.data('name') || selected.text());
+                $('#customerBox').addClass('selected').removeClass('error');
+                $('#customerModal').modal('hide');
+            }
+        });
+
+        // Initialize Select2 for product selection
+        function initSelect2ForRow(row) {
+            var select = row.find('.product-select');
+            // Safely destroy Select2 if it exists
+            if (select.length && select.hasClass('select2-hidden-accessible')) {
+                try {
+                    select.select2('destroy');
+                } catch (e) {
+                    // If destroy fails, manually clean up
+                    select.removeClass('select2-hidden-accessible');
+                    select.removeAttr('data-select2-id');
+                    select.next('.select2-container').remove();
+                }
+            }
+            // Initialize Select2 only if element exists and not already initialized
+            if (select.length && !select.hasClass('select2-hidden-accessible')) {
+                select.select2({
+                    width: '100%',
+                    theme: 'bootstrap-5',
+                    placeholder: 'Select Product/Service',
+                    dropdownParent: row.closest('.items-section'),
+                    disabled: hasPayments
+                });
+            }
+        }
+
+        // No Select2 for the applicant/service text inputs – keep simple text fields
+
+        // Calculate line total
+        function calculateLineTotal(row) {
+            var qty = 1; // Default to 1 if quantity column is hidden
+            if (!$('[data-column="quantity"]').first().hasClass('hidden')) {
+                qty = parseFloat(row.find('.quantity').val()) || 1;
+            } else {
+                // If quantity is hidden, ensure it's set to 1 in the input
+                row.find('.quantity').val(1);
+            }
+            var price = parseFloat(row.find('.unit-price').val()) || 0;
+            var total = qty * price;
+            row.find('.line-amount').text('$' + total.toFixed(2));
+            return total;
+        }
+
+        // Calculate totals
+        function calculateTotals() {
+            if (hasPayments) return; // Don't recalculate if payments exist
+            
+            var subtotal = 0;
+            var taxableTotal = 0;
+
+            $('.item-row').each(function () {
+                var row = $(this);
+                var lineTotal = calculateLineTotal(row);
+                subtotal += lineTotal;
+
+                var isTaxable = row.find('.is-taxable').length ? parseInt(row.find('.is-taxable').val() || '0') === 1 : false;
+                if (isTaxable) {
+                    taxableTotal += lineTotal;
+                }
+            });
+
+            // Calculate discount (applied BEFORE tax)
+            var discountAmount = 0;
+            var discountBase = subtotal;
+            if ($('#discountRow').is(':visible')) {
+                var discountValue = parseFloat($('#discountAmount').val()) || 0;
+                var discountType = $('#discountType').val();
+                if (discountType === 'percent') {
+                    discountAmount = discountBase * discountValue / 100;
+                } else {
+                    discountAmount = discountValue;
+                }
+            }
+
+            if (discountAmount > discountBase) {
+                discountAmount = discountBase;
+            }
+
+            var discountRatio = 0;
+            if (discountBase > 0) {
+                discountRatio = discountAmount / discountBase;
+            }
+
+            var taxableBase = taxableTotal * (1 - discountRatio);
+            if (taxableBase < 0) {
+                taxableBase = 0;
+            }
+
+            // Calculate tax on discounted taxable base
+            var taxTotal = 0;
+            var taxRate = parseFloat($('#invoiceTaxSlab option:selected').data('rate')) || 0;
+            if (taxRate > 0 && taxableBase > 0) {
+                taxTotal = (taxableBase * taxRate / 100);
+            }
+
+            var discountedSubtotal = discountBase - discountAmount;
+            if (discountedSubtotal < 0) {
+                discountedSubtotal = 0;
+            }
+
+            var total = discountedSubtotal + taxTotal;
+
+            $('#subtotal').text('$' + subtotal.toFixed(2));
+            $('#taxAmount').text('$' + taxTotal.toFixed(2));
+            $('#total').text('$' + total.toFixed(2));
+            $('#amountDue').text('$' + total.toFixed(2));
+
+            // Show/hide tax row
+            if (taxTotal > 0) {
+                $('#taxRow').show();
+            } else {
+                $('#taxRow').hide();
+            }
+        }
+
+        // Show tax row when tax is selected
+        $('#invoiceTaxSlab').on('change', function () {
+            calculateTotals();
+        });
+
+        // Discount functionality
+        $('#addDiscount').on('click', function (e) {
+            if (hasPayments) {
+                e.preventDefault();
+                return false;
+            }
+            e.preventDefault();
+            $('#discountRow').show();
+            $('#addDiscountRow').hide();
+            calculateTotals();
+        });
+
+        $('#removeDiscount').on('click', function () {
+            if (hasPayments) return;
+            $('#discountAmount').val('0');
+            $('#discountType').val('amount');
+            $('#discountRow').hide();
+            $('#addDiscountRow').show();
+            calculateTotals();
+        });
+
+        $(document).on('input change', '#discountAmount, #discountType', function () {
+            calculateTotals();
+        });
+
+        // Quantity and price change handlers
+        $(document).on('input', '.quantity, .unit-price', function () {
+            if (hasPayments) return;
+            var row = $(this).closest('.item-row');
+            calculateLineTotal(row);
+            calculateTotals();
+        });
+
+        // Add new item row
+        function addNewItemRow() {
+            if (hasPayments) return false;
+            if (!itemRowTemplateHtml) {
+                console.error('No cached item row template found');
+                return false;
+            }
+
+            // Create a new row from the cached clean HTML
+            var newRow = $(itemRowTemplateHtml);
+
+            // Reset all input values
+            newRow.find('input[type="hidden"]').val(''); // clear ids
+            newRow.find('.quantity').val('1');
+            newRow.find('.unit-price').val('');
+            newRow.find('.line-amount').text('$0.00');
+            newRow.find('.service-name').val('');
+            newRow.find('.service-id').val('');
+
+            // Reset taxability
+            newRow.find('.is-taxable').val('0');
+            newRow.find('.taxable-checkbox').prop('checked', false);
+
+            // Apply current column visibility settings to the new row
+            if (!$('#toggleQuantity').is(':checked')) {
+                newRow.find('[data-column="quantity"]').addClass('hidden');
+            } else {
+                newRow.find('[data-column="quantity"]').removeClass('hidden');
+            }
+
+            if (!$('#togglePrice').is(':checked')) {
+                newRow.find('[data-column="price"]').addClass('hidden');
+            } else {
+                newRow.find('[data-column="price"]').removeClass('hidden');
+            }
+
+            // Append new row to table
+            $('#itemsTableBody').append(newRow);
+
+            // Recalculate totals
+            calculateTotals();
+
+            return false;
+        }
+
+        // Bind click handler using event delegation
+        $(document).on('click', '#addItem', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            addNewItemRow();
+            return false;
+        });
+
+        // Remove item row
+        $(document).on('click', '.remove-item-btn', function () {
+            if (hasPayments) return;
+            if ($('.item-row').length > 1) {
+                var row = $(this).closest('.item-row');
+                row.remove();
+                calculateTotals();
+            }
+        });
+
+        // Column visibility toggle functionality
+        function toggleColumn(columnName, show) {
+            var selector = '[data-column="' + columnName + '"]';
+            if (show) {
+                $(selector).removeClass('hidden');
+            } else {
+                $(selector).addClass('hidden');
+            }
+            calculateTotals();
+        }
+
+        // Load saved column visibility preferences from localStorage
+        function loadColumnPreferences() {
+            var saved = localStorage.getItem('invoiceColumnVisibility');
+            if (saved) {
+                try {
+                    var prefs = JSON.parse(saved);
+                    $('#toggleQuantity').prop('checked', prefs.quantity !== false);
+                    $('#togglePrice').prop('checked', prefs.price !== false);
+                    $('#toggleTaxable').prop('checked', prefs.taxable !== false);
+                    toggleColumn('quantity', prefs.quantity !== false);
+                    toggleColumn('price', prefs.price !== false);
+                    toggleColumn('taxable', prefs.taxable !== false);
+                } catch (e) {
+                    console.error('Error loading column preferences:', e);
+                }
+            }
+        }
+
+        // Save column visibility preferences to localStorage
+        function saveColumnPreferences() {
+            var prefs = {
+                quantity: $('#toggleQuantity').is(':checked'),
+                price: $('#togglePrice').is(':checked'),
+                taxable: $('#toggleTaxable').is(':checked')
+            };
+            localStorage.setItem('invoiceColumnVisibility', JSON.stringify(prefs));
+        }
+
+        // Column visibility toggle handlers
+        $('#toggleQuantity').on('change', function () {
+            toggleColumn('quantity', $(this).is(':checked'));
+            saveColumnPreferences();
+        });
+
+        $('#togglePrice').on('change', function () {
+            toggleColumn('price', $(this).is(':checked'));
+            saveColumnPreferences();
+        });
+
+        $('#toggleTaxable').on('change', function () {
+            toggleColumn('taxable', $(this).is(':checked'));
+            saveColumnPreferences();
+        });
+
+        // Load preferences on page load
+        loadColumnPreferences();
+
+        // Taxable checkbox -> hidden value sync
+        $(document).on('change', '.taxable-checkbox', function () {
+            if (hasPayments) return;
+            var row = $(this).closest('.item-row');
+            var checked = $(this).is(':checked');
+            row.find('.is-taxable').val(checked ? '1' : '0');
+            calculateTotals();
+        });
+
+        // Initial calculation
+        calculateTotals();
+    });
+</script>
+{% endblock %}

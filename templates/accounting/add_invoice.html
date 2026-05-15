@@ -1,0 +1,1445 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<style>
+    .invoice-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: #fff;
+    }
+
+    .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .invoice-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+    }
+
+    .invoice-header-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .business-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .business-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        cursor: pointer;
+    }
+
+    .business-section-header h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        color: #495057;
+    }
+
+    .business-section-header .collapse-icon {
+        transition: transform 0.3s;
+    }
+
+    .business-section-header.collapsed .collapse-icon {
+        transform: rotate(180deg);
+    }
+
+    .business-info {
+        display: flex;
+        gap: 30px;
+    }
+
+    .business-logo {
+        width: 150px;
+    }
+
+    .business-logo img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .business-details {
+        flex: 1;
+    }
+
+    .business-details .form-group {
+        margin-bottom: 15px;
+    }
+
+    .business-details label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .business-details input[type="text"] {
+        font-size: 24px;
+        font-weight: 600;
+        border: none;
+        border-bottom: 2px solid #e9ecef;
+        padding: 5px 0;
+        width: 100%;
+    }
+
+    .business-details input[type="text"]:focus {
+        outline: none;
+        border-bottom-color: #0d6efd;
+    }
+
+    .business-contact {
+        font-size: 13px;
+        color: #6c757d;
+        line-height: 1.6;
+        margin-top: 15px;
+    }
+
+    .customer-invoice-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    .customer-box {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .customer-box:hover {
+        border-color: #0d6efd;
+        background: #f8f9fa;
+    }
+
+    .customer-box.selected {
+        border-color: #0d6efd;
+        background: #e7f1ff;
+    }
+
+    .customer-box i {
+        font-size: 32px;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+
+    .customer-box.selected i {
+        color: #0d6efd;
+    }
+
+    .customer-box span {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .customer-box.selected span {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+
+    .customer-box.error {
+        border-color: #dc3545;
+        background: #fff5f5;
+    }
+
+    .customer-box.error i,
+    .customer-box.error span {
+        color: #dc3545;
+    }
+
+    .invoice-details-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .invoice-details-form .form-group {
+        margin-bottom: 0;
+    }
+
+    .invoice-details-form label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .invoice-details-form input,
+    .invoice-details-form select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .invoice-number-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .invoice-number-group input {
+        flex: 1;
+    }
+
+    .invoice-number-group .auto-gen-toggle {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+    .items-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .items-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .column-visibility-controls {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .column-visibility-controls label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #495057;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .column-visibility-controls input[type="checkbox"] {
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .column-visibility-controls .control-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        margin-right: 5px;
+    }
+
+    .items-table th[data-column],
+    .items-table td[data-column] {
+        transition: all 0.3s ease;
+    }
+
+    .items-table th[data-column].hidden,
+    .items-table td[data-column].hidden {
+        display: none;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+
+    .items-table thead {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .items-table th {
+        padding: 12px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+
+    .items-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .items-table input,
+    .items-table select {
+        width: 100%;
+        border: 1px solid #e9ecef;
+        padding: 8px;
+        font-size: 14px;
+        border-radius: 4px;
+    }
+
+    .items-table input:focus,
+    .items-table select:focus {
+        outline: 2px solid #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .items-table .select2-container {
+        width: 100% !important;
+    }
+
+    .add-item-btn {
+        margin-top: 15px;
+        background: none;
+        border: none;
+        color: #0d6efd;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 8px 0;
+    }
+
+    .add-item-btn:hover {
+        text-decoration: underline;
+    }
+
+    .add-item-btn i {
+        margin-right: 5px;
+    }
+
+    .summary-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .summary-box {
+        width: 300px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+    }
+
+    .summary-row.total {
+        border-top: 2px solid #dee2e6;
+        margin-top: 10px;
+        padding-top: 15px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .summary-row.amount-due {
+        border-top: 2px solid #dee2e6;
+        margin-top: 10px;
+        padding-top: 15px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #0d6efd;
+    }
+
+    .notes-section,
+    .footer-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        cursor: pointer;
+    }
+
+    .section-header h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        color: #495057;
+    }
+
+    .section-header .collapse-icon {
+        transition: transform 0.3s;
+    }
+
+    .section-header.collapsed .collapse-icon {
+        transform: rotate(180deg);
+    }
+
+    .notes-section textarea,
+    .footer-section textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+    }
+
+    .attachments-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .upload-area:hover {
+        border-color: #0d6efd;
+        background: #f8f9fa;
+    }
+
+    .upload-area i {
+        font-size: 48px;
+        color: #6c757d;
+        margin-bottom: 15px;
+    }
+
+    .invoice-footer {
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .remove-item-btn {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0 5px;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .remove-item-btn:hover {
+        color: #c82333;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .currency-select {
+        display: inline-block;
+        margin-left: 10px;
+    }
+
+    .line-amount {
+        font-weight: 600;
+        color: #212529;
+    }
+</style>
+{% endblock %}
+{% block main %}
+
+<div class="invoice-container">
+    <form method="post" id="invoiceForm" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Invoice Header -->
+        <div class="invoice-header">
+            <h1>New invoice</h1>
+            <div class="invoice-header-actions">
+                <button type="button" class="btn btn-outline-secondary" id="previewBtn">Preview</button>
+                <button type="submit" class="btn btn-primary">Save and continue <i
+                        class="feather-chevron-down"></i></button>
+            </div>
+        </div>
+
+        <!-- Business Address and Contact Details Section -->
+        <div class="business-section">
+            <div class="business-section-header" data-toggle="collapse" data-target="#businessSection">
+                <h3>Business Address and Contact Details, Title, Summary, and Logo</h3>
+                <i class="feather-chevron-up collapse-icon"></i>
+            </div>
+            <div id="businessSection" class="collapse show">
+                <div class="business-info">
+                    <div class="business-logo">
+                        {% if business.logo %}
+                        <img src="{{ business.logo.url }}" alt="Company Logo"
+                            style="max-width: 150px; max-height: 150px; object-fit: contain;">
+                        {% else %}
+                        <div
+                            style="background: #f8f9fa; padding: 20px; border-radius: 4px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center;">
+                            <span style="color: #6c757d; font-size: 12px;">No Logo</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="business-details">
+                        <div class="form-group">
+                            <label>Invoice</label>
+                            <input type="text" name="title" value="Invoice" placeholder="Invoice">
+                        </div>
+                        <div class="form-group">
+                            <label>Summary (e.g. project name, description of invoice)</label>
+                            <input type="text" name="summary" placeholder="Summary">
+                        </div>
+                        <div class="business-contact">
+                            <strong>{{ business.name }}</strong><br>
+                            {{ business.address_line1 }}<br>
+                            {% if business.address_line2 %}{{ business.address_line2 }}<br>{% endif %}
+                            {{ business.city }}, {{ business.province }} {{ business.postal_code }}<br>
+                            {{ business.country }}<br>
+                            {% if business.phone %}Phone: {{ business.phone }}<br>{% endif %}
+                            {% if business.mobile %}Mobile: {{ business.mobile }}<br>{% endif %}
+                            {% if business.website %}{{ business.website }}{% endif %}
+                        </div>
+                        <a href="{% url 'accounting_invoice_settings' %}"
+                            style="font-size: 12px; color: #0d6efd; margin-top: 10px; display: inline-block;">Edit your
+                            business address and contact details.</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer and Invoice Details Section -->
+        <div class="customer-invoice-section">
+            <div>
+            <div class="customer-box" id="customerBox" onclick="document.getElementById('applicantSelect').focus()">
+                <i class="feather-user"></i>
+                <span id="customerText">Add an applicant</span>
+            </div>
+                <!-- Applicant Info Panel (hidden by default) -->
+                <div id="applicantInfoPanel" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h6 style="margin: 0; color: #495057;">
+                            <i class="feather-info" style="margin-right: 5px;"></i>
+                            Applicant Information
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-link text-muted" onclick="$('#applicantInfoPanel').slideUp();" style="padding: 0; border: none; background: none;">
+                            <i class="feather-x"></i>
+                        </button>
+                    </div>
+                    <div id="applicantInfoContent" style="font-size: 13px; color: #6c757d;">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <div class="invoice-details-form">
+                <div class="form-group">
+                    <label>Invoice number</label>
+                    <div class="invoice-number-group">
+                        <input type="text" name="invoice_number" id="invoiceNumber" required>
+                        <label class="auto-gen-toggle">
+                            <input type="checkbox" id="autoGenInvoice" checked>
+                            <span>Auto</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>P.O./S.O. number</label>
+                    <input type="text" name="po_number" placeholder="P.O./S.O. number">
+                </div>
+                <div class="form-group">
+                    <label>Invoice date</label>
+                    <input type="date" name="invoice_date" value="{{ today|date:'Y-m-d' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Payment due</label>
+                    <input type="date" name="due_date" id="dueDate" value="{{ default_due_date|date:'Y-m-d' }}"
+                        required>
+                    <small style="display: block; margin-top: 5px; color: #6c757d;">Due in {{business.default_due_days}} days</small>
+                </div>
+            </div>
+        </div>
+        <select name="applicant" id="applicantSelect" required style="display: none;">
+            <option value="">Select Applicant</option>
+            {% for applicant in applicants %}
+            <option value="{{ applicant.id }}">{{ applicant.f_name }} {{ applicant.l_name }} ({{ applicant.client_id }})</option>
+            {% endfor %}
+        </select>
+
+        <!-- Items Section -->
+        <div class="items-section">
+            <div class="column-visibility-controls">
+                <span class="control-label">Show Columns:</span>
+                <label>
+                    <input type="checkbox" id="toggleItems" checked disabled>
+                    <span>Items</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleQuantity" checked>
+                    <span>Quantity</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="togglePrice" checked>
+                    <span>Price</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleAmount" checked disabled>
+                    <span>Amount</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleTaxable" checked>
+                    <span>Taxable</span>
+                </label>
+            </div>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th data-column="items">Items</th>
+                        <th data-column="quantity">Quantity</th>
+                        <th data-column="price">Price</th>
+                        <th data-column="amount">Amount</th>
+                        <th data-column="taxable">Taxable</th>
+                        <th style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    <tr class="item-row">
+                        <td data-column="items">
+                            <input type="text" name="service_name[]" class="service-name form-control" placeholder="Enter service/item name">
+                            <input type="hidden" name="service[]" class="service-id" value="">
+                        </td>
+                        <td data-column="quantity">
+                            <input type="number" name="quantity[]" class="quantity" value="1" step="0.01" min="0.01"
+                                required>
+                        </td>
+                        <td data-column="price">
+                            <input type="number" name="unit_price[]" class="unit-price" step="0.01" min="0" required>
+                        </td>
+                        <td data-column="amount">
+                            <span class="line-amount">$0.00</span>
+                        </td>
+                        <td data-column="taxable" style="text-align: center;">
+                            <!-- Hidden field actually posted; checkbox just controls it -->
+                            <input type="hidden" name="is_taxable[]" class="is-taxable" value="0">
+                            <input type="checkbox" class="taxable-checkbox" title="Apply tax to this line">
+                        </td>
+                        <td>
+                            <button type="button" class="remove-item-btn">×</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="add-item-btn" id="addItem">
+                <i class="feather-plus"></i> Add an Item
+            </button>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span id="subtotal">$0.00</span>
+                </div>
+                <div class="summary-row" id="discountRow" style="display: none;">
+                    <span>Discount:</span>
+                    <span>
+                        <input type="number" id="discountAmount" name="discount_amount"
+                            class="form-control form-control-sm"
+                            style="display: inline-block; width: 100px; margin-left: 10px;" step="0.01" min="0"
+                            value="0">
+                        <select id="discountType" name="discount_type" class="form-select form-select-sm"
+                            style="display: inline-block; width: 80px; margin-left: 5px;">
+                            <option value="amount">$</option>
+                            <option value="percent">%</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-link text-danger" id="removeDiscount"
+                            style="margin-left: 5px;">×</button>
+                    </span>
+                </div>
+                <div class="summary-row" id="addDiscountRow">
+                    <a href="#" id="addDiscount" style="color: #0d6efd; text-decoration: none;">
+                        <i class="feather-plus"></i> Add a discount
+                    </a>
+                </div>
+                <div class="summary-row">
+                    <span>Tax:</span>
+                    <span>
+                        <select name="tax_slab" id="invoiceTaxSlab" class="form-select form-select-sm"
+                            style="display: inline-block; width: 150px; margin-left: 10px;">
+                            <option value="" data-rate="0">No Tax</option>
+                            {% for tax in tax_slabs %}
+                            <option value="{{ tax.id }}" data-rate="{{ tax.rate }}" {% if tax.is_default %}selected{% endif %}>
+                                {{ tax.name }} ({{ tax.rate }}%)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </span>
+                </div>
+                <div class="summary-row" id="taxRow" style="display: none;">
+                    <span>Tax Amount:</span>
+                    <span id="taxAmount">$0.00</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total:</span>
+                    <span>
+                        <span id="total">$0.00</span>
+                        <select name="currency" class="currency-select form-select form-select-sm"
+                            style="display: inline-block; width: auto; margin-left: 10px;">
+                            <option value="CAD">CAD ($) - Canadian dollar</option>
+                            <option value="USD">USD ($) - US dollar</option>
+                        </select>
+                    </span>
+                </div>
+                <div class="summary-row amount-due">
+                    <span>Amount Due:</span>
+                    <span id="amountDue">$0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes/Terms Section -->
+        <div class="notes-section">
+            <div class="section-header">
+                <h3>Notes / Terms</h3>
+            </div>
+            <textarea name="notes"
+                placeholder="Enter notes or terms of service that are visible to your customer.">{% if business.default_notes_terms %}{{ business.default_notes_terms }}{% endif %}</textarea>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="footer-section">
+            <div class="section-header" data-toggle="collapse" data-target="#footerSection">
+                <h3>Footer</h3>
+                <i class="feather-chevron-up collapse-icon"></i>
+            </div>
+            <div id="footerSection" class="collapse show">
+                <textarea name="footer"
+                    placeholder="Enter a footer for this invoice (e.g. tax information, thank you note).">{% if business.default_footer %}{{ business.default_footer }}{% endif %}</textarea>
+            </div>
+        </div>
+
+        <!-- Invoice Footer -->
+        <div class="invoice-footer">
+            <div></div>
+            <div class="invoice-header-actions">
+                <button type="button" class="btn btn-outline-secondary" id="previewBtnBottom">Preview</button>
+                <button type="submit" class="btn btn-primary">Save and continue <i
+                        class="feather-chevron-down"></i></button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Customer Selection Modal -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select Applicant</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="customerSearch" placeholder="Search applicants...">
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                        <select name="applicant_select" id="applicantSelectModal" class="form-select" size="10"
+                        style="border: none;">
+                        <option value="">-- Select Applicant --</option>
+                        {% for applicant in applicants %}
+                        <option value="{{ applicant.id }}"
+                                data-name="{{ applicant.f_name }} {{ applicant.l_name }}"
+                                data-email="{{ applicant.email }}">
+                            {{ applicant.f_name }} {{ applicant.l_name }} ({{ applicant.client_id }}){% if applicant.email %} - {{ applicant.email }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="selectCustomerBtn">Select</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Prevent dashboard-init from running on this page
+    if (typeof window.dashboardInit !== 'undefined') {
+        window.dashboardInit = function () { };
+    }
+
+    $(document).ready(function () {
+        // Cache a clean HTML template of the first item row BEFORE any JS plugins modify it
+        var itemRowTemplateHtml = $('#itemsTableBody').find('.item-row').first().prop('outerHTML');
+        // Generate invoice number
+        function generateInvoiceNumber() {
+            $.ajax({
+                url: '{% url "accounting_api_invoice_number" %}',
+                method: 'GET',
+                success: function (data) {
+                    if ($('#autoGenInvoice').is(':checked')) {
+                        $('#invoiceNumber').val(data.invoice_number);
+                    }
+                },
+                error: function () {
+                    // Fallback to default if API fails
+                    if ($('#autoGenInvoice').is(':checked')) {
+                        $('#invoiceNumber').val('RI000001');
+                    }
+                }
+            });
+        }
+        generateInvoiceNumber();
+
+        // Toggle auto-generation
+        $('#autoGenInvoice').on('change', function () {
+            if ($(this).is(':checked')) {
+                generateInvoiceNumber();
+                $('#invoiceNumber').prop('readonly', true);
+            } else {
+                $('#invoiceNumber').prop('readonly', false);
+            }
+        });
+        $('#invoiceNumber').prop('readonly', true);
+
+        // Set default due date based on invoice date and default due days
+        var defaultDueDays = {{ business.default_due_days|default_if_none:30 }};
+
+        $('input[name="invoice_date"]').on('change', function () {
+        var invoiceDate = new Date($(this).val());
+        var dueDate = new Date(invoiceDate);
+        dueDate.setDate(dueDate.getDate() + defaultDueDays);
+            $('#dueDate').val(dueDate.toISOString().split('T')[0]);
+        });
+
+    // Collapse functionality
+    $('.business-section-header, .section-header[data-toggle="collapse"]').on('click', function () {
+        $(this).toggleClass('collapsed');
+    });
+
+        // Applicant selection
+        $('#customerBox').on('click', function () {
+            $('#customerModal').modal('show');
+            $('#customerBox').removeClass('error');
+        });
+
+    $('#customerSearch').on('keyup', function () {
+        var search = $(this).val().toLowerCase();
+        $('#applicantSelectModal option').each(function () {
+            var text = $(this).text().toLowerCase();
+            if (text.indexOf(search) > -1) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    $('#selectCustomerBtn').on('click', function () {
+        var selected = $('#applicantSelectModal option:selected');
+        if (selected.val()) {
+            $('#applicantSelect').val(selected.val());
+            $('#customerText').text(selected.data('name') || selected.text());
+            $('#customerBox').addClass('selected').removeClass('error');
+            $('#customerModal').modal('hide');
+            
+            // Load applicant data and auto-populate invoice items
+            loadApplicantData(selected.val());
+        }
+    });
+    
+    // Also trigger when applicant is selected directly (if not using modal)
+    $('#applicantSelect').on('change', function() {
+        if ($(this).val()) {
+            loadApplicantData($(this).val());
+        }
+    });
+    
+    // Function to load applicant data and auto-populate invoice items
+    function loadApplicantData(applicantId) {
+        $.ajax({
+            url: '/accounting/api/applicant/' + applicantId + '/data',
+            method: 'GET',
+            success: function(data) {
+                if (data.has_applicant) {
+                    // Show applicant info panel
+                    var infoHtml = '<div style="margin-bottom: 10px;">';
+                    infoHtml += '<strong>Client ID:</strong> ' + (data.applicant.client_id || 'N/A') + '<br>';
+                    infoHtml += '<strong>Service:</strong> ' + (data.applicant.application_type || 'N/A') + '<br>';
+                    if (data.service_info.total_fee_amount > 0) {
+                        infoHtml += '<strong>Total Fee:</strong> $' + data.service_info.total_fee_amount.toFixed(2) + '<br>';
+                    }
+                    if (data.total_paid > 0) {
+                        infoHtml += '<strong>Total Paid:</strong> $' + data.total_paid.toFixed(2) + ' (' + data.payment_history.length + ' payment(s))<br>';
+                    }
+                    if (data.service_info.balance_amount > 0) {
+                        infoHtml += '<strong>Balance:</strong> $' + data.service_info.balance_amount.toFixed(2) + '<br>';
+                    }
+                    infoHtml += '</div>';
+                    
+                    if (data.payment_history && data.payment_history.length > 0) {
+                        infoHtml += '<details style="margin-top: 10px;">';
+                        infoHtml += '<summary style="cursor: pointer; color: #0d6efd; font-weight: 500;">View Payment History</summary>';
+                        infoHtml += '<div style="margin-top: 10px; max-height: 200px; overflow-y: auto;">';
+                        infoHtml += '<table style="width: 100%; font-size: 12px; border-collapse: collapse;">';
+                        infoHtml += '<thead><tr style="border-bottom: 1px solid #dee2e6;"><th style="text-align: left; padding: 5px;">Date</th><th style="text-align: left; padding: 5px;">Amount</th><th style="text-align: left; padding: 5px;">Method</th></tr></thead>';
+                        infoHtml += '<tbody>';
+                        data.payment_history.forEach(function(payment) {
+                            infoHtml += '<tr style="border-bottom: 1px solid #f0f0f0;">';
+                            infoHtml += '<td style="padding: 5px;">' + (payment.paid_date || payment.added_at || 'N/A') + '</td>';
+                            infoHtml += '<td style="padding: 5px;">$' + payment.amount.toFixed(2) + '</td>';
+                            infoHtml += '<td style="padding: 5px;">' + (payment.payment_method || 'N/A') + '</td>';
+                            infoHtml += '</tr>';
+                        });
+                        infoHtml += '</tbody></table></div></details>';
+                    }
+                    
+                    $('#applicantInfoContent').html(infoHtml);
+                    $('#applicantInfoPanel').slideDown();
+                    
+                    // Auto-populate items if available
+                    if (data.suggested_items && data.suggested_items.length > 0) {
+                        Swal.fire({
+                            title: 'Auto-populate invoice items?',
+                            text: 'We found fee data for this applicant. You can still edit items after auto-populating.',
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, auto-populate',
+                            cancelButtonText: "No, I'll add manually"
+                        }).then(function (result) {
+                            if (result.isConfirmed) {
+                                autoPopulateItems(data.suggested_items);
+                            }
+                        });
+                    }
+                } else {
+                    // Hide applicant info panel if no applicant
+                    $('#applicantInfoPanel').slideUp();
+                }
+            },
+            error: function(xhr, status, error) {
+                // Hide applicant info panel on error
+                $('#applicantInfoPanel').slideUp();
+                console.log('No applicant data available');
+            }
+        });
+    }
+    
+    // Function to auto-populate invoice items
+    function autoPopulateItems(suggestedItems) {
+        // Clear existing items (except the first empty row)
+        var existingRows = $('.item-row');
+        if (existingRows.length > 1) {
+            existingRows.slice(1).each(function() {
+            var row = $(this);
+            row.remove();
+            });
+        }
+        
+        // Clear the first row
+        var firstRow = $('.item-row').first();
+        firstRow.find('.service-name').val('');
+        firstRow.find('.service-id').val('');
+        firstRow.find('.quantity').val('1');
+        firstRow.find('.unit-price').val('');
+        firstRow.find('.line-amount').text('$0.00');
+        
+        // Add suggested items
+        suggestedItems.forEach(function(item, index) {
+            var row;
+            if (index === 0) {
+                // Use first row
+                row = $('.item-row').first();
+            } else {
+                // Add new row for additional items
+                addNewItemRow();
+                row = $('.item-row').last();
+            }
+            
+            // Set service name as text
+            row.find('.service-name').val(item.name);
+            row.find('.service-id').val(''); // No service ID for custom items
+            
+            // Set quantity and price
+            row.find('.quantity').val(item.quantity);
+            row.find('.unit-price').val(item.unit_price);
+
+            // Service fee should be taxable by default; all other
+            // auto-generated items are non-taxable unless the user opts in.
+            var isTaxable = item.type === 'service_fee';
+            row.find('.is-taxable').val(isTaxable ? '1' : '0');
+            row.find('.taxable-checkbox').prop('checked', isTaxable);
+            
+            // Calculate line total
+            calculateLineTotal(row);
+        });
+        
+        // Recalculate totals
+        calculateTotals();
+        
+        // Show a message
+        if (suggestedItems.length > 0) {
+            var message = 'Auto-populated ' + suggestedItems.length + ' item(s) from applicant data. ';
+            message += 'You can modify these items or add additional items as needed.';
+            // You could show this as a toast notification
+            console.log(message);
+        }
+    }
+
+    // Select2 initialization removed - using text input for services now
+
+    // Prevent duplicate invoices for the same applicant by checking existing
+    // invoices before the form is finally submitted.
+    var duplicateCheckDone = false;
+    $('#invoiceForm').on('submit', function (e) {
+        if (duplicateCheckDone) {
+            return true; // allow normal submit
+        }
+
+        var applicantId = $('#applicantSelect').val();
+        if (!applicantId) {
+            // No applicant selected – let the normal server-side validation handle it
+            return true;
+        }
+
+        e.preventDefault();
+
+        $.ajax({
+            url: '/accounting/api/applicant/' + applicantId + '/invoices',
+            method: 'GET',
+            success: function (data) {
+                if (data && data.invoices && data.invoices.length > 0) {
+                    var latest = data.invoices[0];
+                    var html = '<p>An invoice already exists for this applicant.</p>';
+                    html += '<p><strong>Latest invoice:</strong> ' + latest.invoice_number +
+                        ' (' + latest.status_display + '), Total: $' + latest.total_amount + '</p>';
+                    html += '<p>Do you still want to create another invoice?</p>';
+
+                    Swal.fire({
+                        title: 'Possible duplicate invoice',
+                        html: html,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Create new invoice',
+                        cancelButtonText: 'View existing invoice'
+                    }).then(function (result) {
+                        if (result.isConfirmed) {
+                            duplicateCheckDone = true;
+                            $('#invoiceForm').trigger('submit');
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            if (latest.url) {
+                                window.location.href = latest.url;
+                            }
+                        }
+                    });
+                } else {
+                    // No existing invoices – safe to submit
+                    duplicateCheckDone = true;
+                    $('#invoiceForm').trigger('submit');
+                }
+            },
+            error: function () {
+                // On error, fall back to normal submission
+                duplicateCheckDone = true;
+                $('#invoiceForm').trigger('submit');
+            }
+        });
+    });
+
+    // Calculate line total
+    function calculateLineTotal(row) {
+        var qty = 1; // Default to 1 if quantity column is hidden
+        if (!$('[data-column="quantity"]').first().hasClass('hidden')) {
+            qty = parseFloat(row.find('.quantity').val()) || 1;
+        } else {
+            // If quantity is hidden, ensure it's set to 1 in the input
+            row.find('.quantity').val(1);
+        }
+        var price = parseFloat(row.find('.unit-price').val()) || 0;
+        var total = qty * price;
+        row.find('.line-amount').text('$' + total.toFixed(2));
+        return total;
+    }
+
+    // Calculate totals
+    function calculateTotals() {
+        var subtotal = 0;
+        var taxableTotal = 0;
+
+        $('.item-row').each(function () {
+            var row = $(this);
+            var lineTotal = calculateLineTotal(row);
+            subtotal += lineTotal;
+
+            // Only include taxable lines (e.g. application fee or items explicitly marked taxable)
+            var isTaxable = row.find('.is-taxable').length ? parseInt(row.find('.is-taxable').val() || '0') === 1 : false;
+            if (isTaxable) {
+                taxableTotal += lineTotal;
+            }
+        });
+
+        // Calculate discount (applied BEFORE tax)
+        var discountAmount = 0;
+        var discountBase = subtotal;
+        if ($('#discountRow').is(':visible')) {
+            var discountValue = parseFloat($('#discountAmount').val()) || 0;
+            var discountType = $('#discountType').val();
+            if (discountType === 'percent') {
+                discountAmount = discountBase * discountValue / 100;
+            } else {
+                discountAmount = discountValue;
+            }
+        }
+
+        // Clamp discount so it never exceeds subtotal
+        if (discountAmount > discountBase) {
+            discountAmount = discountBase;
+        }
+
+        // Effective discount ratio applied across all items
+        var discountRatio = 0;
+        if (discountBase > 0) {
+            discountRatio = discountAmount / discountBase;
+        }
+
+        // Tax base is the discounted total of taxable lines only
+        var taxableBase = taxableTotal * (1 - discountRatio);
+        if (taxableBase < 0) {
+            taxableBase = 0;
+        }
+
+        // Calculate tax on discounted taxable base
+        var taxTotal = 0;
+        var taxRate = parseFloat($('#invoiceTaxSlab option:selected').data('rate')) || 0;
+        if (taxRate > 0 && taxableBase > 0) {
+            taxTotal = (taxableBase * taxRate / 100);
+        }
+
+        var discountedSubtotal = discountBase - discountAmount;
+        if (discountedSubtotal < 0) {
+            discountedSubtotal = 0;
+        }
+
+        var total = discountedSubtotal + taxTotal;
+
+        $('#subtotal').text('$' + subtotal.toFixed(2));
+        $('#taxAmount').text('$' + taxTotal.toFixed(2));
+        $('#total').text('$' + total.toFixed(2));
+        $('#amountDue').text('$' + total.toFixed(2));
+
+        // Show/hide tax row
+        if (taxTotal > 0) {
+            $('#taxRow').show();
+        } else {
+            $('#taxRow').hide();
+        }
+    }
+
+    // Show tax row when tax is selected
+    $('#invoiceTaxSlab').on('change', function () {
+            calculateTotals();
+    });
+
+    // Discount functionality
+    $('#addDiscount').on('click', function (e) {
+        e.preventDefault();
+        $('#discountRow').show();
+        $('#addDiscountRow').hide();
+        calculateTotals();
+    });
+
+    $('#removeDiscount').on('click', function () {
+        $('#discountAmount').val('0');
+            $('#discountType').val('amount');
+        $('#discountRow').hide();
+        $('#addDiscountRow').show();
+        calculateTotals();
+    });
+
+    $(document).on('input change', '#discountAmount, #discountType', function () {
+        calculateTotals();
+    });
+
+    // Service name input handler removed - using text input now, price is entered manually
+
+    // Quantity and price change handlers
+    $(document).on('input', '.quantity, .unit-price', function () {
+        var row = $(this).closest('.item-row');
+        calculateLineTotal(row);
+        calculateTotals();
+    });
+
+        // Add new item row - builds from the cached clean template
+    function addNewItemRow() {
+        if (!itemRowTemplateHtml) {
+            console.error('No cached item row template found');
+            return false;
+        }
+
+        // Create a new row from the cached clean HTML
+        var newRow = $(itemRowTemplateHtml);
+
+        // Reset all input values
+        newRow.find('input').val('');
+        newRow.find('.quantity').val('1');
+        newRow.find('.line-amount').text('$0.00');
+
+        // Reset service inputs
+        newRow.find('.service-name').val('');
+        newRow.find('.service-id').val('');
+
+        // Reset taxability
+        newRow.find('.is-taxable').val('0');
+        newRow.find('.taxable-checkbox').prop('checked', false);
+
+        // Apply current column visibility settings to the new row
+        // Check quantity column visibility
+        if (!$('#toggleQuantity').is(':checked')) {
+            newRow.find('[data-column="quantity"]').addClass('hidden');
+        } else {
+            newRow.find('[data-column="quantity"]').removeClass('hidden');
+        }
+
+        // Check price column visibility
+        if (!$('#togglePrice').is(':checked')) {
+            newRow.find('[data-column="price"]').addClass('hidden');
+        } else {
+            newRow.find('[data-column="price"]').removeClass('hidden');
+        }
+
+        // Append new row to table
+        $('#itemsTableBody').append(newRow);
+
+        // Recalculate totals (new row starts at 0)
+        calculateTotals();
+
+        return false;
+    }
+
+    // Bind click handler using event delegation
+    $(document).on('click', '#addItem', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        addNewItemRow();
+        return false;
+    });
+
+    // Also bind directly as fallback
+    $('#addItem').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        addNewItemRow();
+        return false;
+    });
+
+    // Remove item row
+    $(document).on('click', '.remove-item-btn', function () {
+        if ($('.item-row').length > 1) {
+            var row = $(this).closest('.item-row');
+            row.remove();
+            calculateTotals();
+        }
+    });
+
+    // Column visibility toggle functionality
+    function toggleColumn(columnName, show) {
+        var selector = '[data-column="' + columnName + '"]';
+        if (show) {
+            $(selector).removeClass('hidden');
+        } else {
+            $(selector).addClass('hidden');
+        }
+        // Recalculate totals when columns are toggled
+        calculateTotals();
+    }
+
+    // Load saved column visibility preferences from localStorage
+    function loadColumnPreferences() {
+        var saved = localStorage.getItem('invoiceColumnVisibility');
+        if (saved) {
+            try {
+                var prefs = JSON.parse(saved);
+                $('#toggleQuantity').prop('checked', prefs.quantity !== false);
+                $('#togglePrice').prop('checked', prefs.price !== false);
+                $('#toggleTaxable').prop('checked', prefs.taxable !== false);
+                toggleColumn('quantity', prefs.quantity !== false);
+                toggleColumn('price', prefs.price !== false);
+                toggleColumn('taxable', prefs.taxable !== false);
+            } catch (e) {
+                console.error('Error loading column preferences:', e);
+            }
+        }
+    }
+
+    // Save column visibility preferences to localStorage
+    function saveColumnPreferences() {
+        var prefs = {
+            quantity: $('#toggleQuantity').is(':checked'),
+            price: $('#togglePrice').is(':checked'),
+            taxable: $('#toggleTaxable').is(':checked')
+        };
+        localStorage.setItem('invoiceColumnVisibility', JSON.stringify(prefs));
+    }
+
+    // Column visibility toggle handlers
+    $('#toggleQuantity').on('change', function () {
+        toggleColumn('quantity', $(this).is(':checked'));
+        saveColumnPreferences();
+    });
+
+    $('#togglePrice').on('change', function () {
+        toggleColumn('price', $(this).is(':checked'));
+        saveColumnPreferences();
+    });
+
+    $('#toggleTaxable').on('change', function () {
+        toggleColumn('taxable', $(this).is(':checked'));
+        saveColumnPreferences();
+    });
+
+    // Load preferences on page load
+    loadColumnPreferences();
+
+    // Taxable checkbox -> hidden value sync
+    $(document).on('change', '.taxable-checkbox', function () {
+        var row = $(this).closest('.item-row');
+        var checked = $(this).is(':checked');
+        row.find('.is-taxable').val(checked ? '1' : '0');
+        calculateTotals();
+    });
+
+    // Preview button functionality - submit form data to preview
+    var previewWindow = null;
+    
+    function submitPreview() {
+        // Create a temporary form to submit to preview
+        var form = $('#invoiceForm');
+        var formData = form.serialize();
+        
+        // Open preview in a new window that we can control
+        previewWindow = window.open('', 'invoicePreview', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        
+        if (!previewWindow) {
+            alert('Please allow popups for this site to preview invoices.');
+            return;
+        }
+        
+        // Create a hidden form and submit it to the new window
+        var previewForm = $('<form>', {
+            'method': 'POST',
+            'action': '{% url "accounting_invoice_preview" 0 %}',
+            'target': 'invoicePreview'
+        });
+        
+        // Add CSRF token
+        previewForm.append($('<input>', {
+            'type': 'hidden',
+            'name': 'csrfmiddlewaretoken',
+            'value': $('[name=csrfmiddlewaretoken]').val()
+        }));
+        
+        // Add all form fields (excluding array fields which are handled separately)
+        form.find('input, select, textarea').each(function() {
+            var $field = $(this);
+            var name = $field.attr('name');
+            var type = $field.attr('type');
+            
+            // Skip array fields (handled separately) and special field types
+            if (name && name.indexOf('[]') === -1 && type !== 'file' && type !== 'submit' && type !== 'button') {
+                if (type === 'checkbox' || type === 'radio') {
+                    if ($field.is(':checked')) {
+                        previewForm.append($('<input>', {
+                            'type': 'hidden',
+                            'name': name,
+                            'value': $field.val() || 'on'
+                        }));
+                    }
+                } else {
+                    previewForm.append($('<input>', {
+                        'type': 'hidden',
+                        'name': name,
+                        'value': $field.val() || ''
+                    }));
+                }
+            }
+        });
+        
+        // Handle array fields (service_name[], service[], quantity[], etc.) - only once
+        form.find('[name*="[]"]').each(function() {
+            var $field = $(this);
+            var name = $field.attr('name');
+            var type = $field.attr('type');
+            
+            // Only process if it has a value and is not a button
+            if (name && type !== 'button' && $field.val()) {
+                previewForm.append($('<input>', {
+                    'type': 'hidden',
+                    'name': name,
+                    'value': $field.val()
+                }));
+            }
+        });
+        
+        // Add column visibility state
+        previewForm.append($('<input>', {
+            'type': 'hidden',
+            'name': 'show_quantity',
+            'value': $('#toggleQuantity').is(':checked') ? '1' : '0'
+        }));
+        previewForm.append($('<input>', {
+            'type': 'hidden',
+            'name': 'show_price',
+            'value': $('#togglePrice').is(':checked') ? '1' : '0'
+        }));
+        
+        // Append to body and submit to the opened window
+        $('body').append(previewForm);
+        previewForm.submit();
+        
+        // Clean up after a short delay
+        setTimeout(function() {
+            previewForm.remove();
+        }, 1000);
+    }
+    
+    $('#previewBtn, #previewBtnBottom').on('click', function(e) {
+        e.preventDefault();
+        submitPreview();
+    });
+
+    // Initial calculation
+    calculateTotals();
+    });
+</script>
+{% endblock %}

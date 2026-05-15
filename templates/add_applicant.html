@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<!-- [ page-header ] start -->
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Dashboard</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Add Applicant</li>
+        </ul>
+    </div>
+</div>
+<!-- [ page-header ] end -->
+<!-- [ Main Content ] start -->
+<div class="main-content" style="min-height: 70vh;">
+    <form method="post" action="{% url 'add_applicant' %}">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-4 mt-2">
+                <label>First Name</label>
+                <input type="text" id="f_name" name="f_name" required placeholder="First Name" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Middle Name</label>
+                <input type="text" id="m_name" name="m_name" placeholder="Middle Name" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Last Name</label>
+                <input type="text" id="l_name" name="l_name" placeholder="Last Name" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Email</label>
+                <input type="email" name="email" id="email" required placeholder="Email" class="form-control">
+                <small id="email_message" class="text-danger"></small>
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Phone Number</label>
+                <input type="tel" name="phone" id="phone" required placeholder="Phone Number" class="form-control">
+                <small id="phone_message" class="text-danger"></small>
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Address</label>
+                <textarea name="address" placeholder="Full Address" class="form-control" id="address" required></textarea>
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Date of Birth</label>
+                <input type="date" name="dob" id="dob" required placeholder="Date of Birth" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Application Type?</label>
+                <select name="application_type" id="application_type" class="form-control" required>
+                    <option value="">Select Service</option>
+                    {% for service in services %}
+                    <option value="{{ service.id }}" data-appfee="{{ service.application_fee }}" data-biomfee="{{ service.bio_metric_fee }}">
+                        {{ service.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Amount Client Retained At (CAD)</label>
+                <input type="number" value=0 min="0" id="amount_retained" step="0.01" required name="amount_retained" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Taxes 13%</label>
+                <input type="number" value=0 min="0" id="taxes" name="taxes" step="0.01" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Application Fee</label>
+                <input type="number" value=0 min="0" id="application_fee" step="0.01" name="application_fee" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Biometric Fee</label>
+                <input type="number" value=0 min="0" id="biometric_fee" step="0.01" name="biometric_fee" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Total Fee</label>
+                <input type="number" readonly value=0 min="0" id="total_fee" step="0.01" name="total_fee" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Advance Collected</label>
+                <input type="number" value=0 min="0" id="advance" step="0.01" name="advance" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Balance Amount</label>
+                <input type="number" readonly value=0 min="0" id="balance" step="0.01" name="balance" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Choose RCIC</label>
+                <select name="rcic" id="rcic" class="form-control" required>
+                    <option value="" selected disabled>Please select RCIC</option>
+                    {% for i in rcic %}
+                    <option value="{{i.user.id}}">{{i.user.first_name}} {{i.user.last_name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <hr class="mt-4">
+            <div class="col-md-12">
+                <h5>Representative Details</h5>
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>First Name</label>
+                <input type="text" id="r_f_name" name="r_f_name" placeholder="First Name" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Middle Name</label>
+                <input type="text" id="r_m_name" name="r_m_name" placeholder="Middle Name" class="form-control">
+            </div>
+            <div class="col-md-4 mt-2">
+                <label>Last Name</label>
+                <input type="text" id="r_l_name" name="r_l_name" placeholder="Last Name" class="form-control">
+            </div>
+            <div class="col-md-12 mt-4 mb-4" align="center">
+                <button type="submit" id="submit_button" class="btn btn-success">Submit</button>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- [ Main Content ] end -->
+{% endblock %}
+{% block script %}
+<script>
+    var manualTaxChange = false;
+
+function calculateFees() {
+    var amountRetained = parseFloat(document.getElementById('amount_retained').value) || 0;
+    var taxes;
+
+    // If taxes were manually changed, use the manually entered value
+    if (manualTaxChange) {
+        taxes = parseFloat(document.getElementById('taxes').value) || 0;
+    } else {
+        // Otherwise, calculate taxes automatically
+        taxes = parseFloat((amountRetained * 0.13).toFixed(2)) || 0;
+        document.getElementById('taxes').value = taxes.toFixed(2);
+    }
+
+    var applicationFee = parseFloat(document.getElementById('application_fee').value) || 0;
+    var biometricFee = parseFloat(document.getElementById('biometric_fee').value) || 0;
+    var totalFee = (amountRetained + taxes + applicationFee + biometricFee).toFixed(2);
+
+    document.getElementById('total_fee').value = totalFee;
+    document.getElementById('advance').max = totalFee;
+    var advanceFee = parseFloat(document.getElementById('advance').value) || 0;
+    var balance = (totalFee - advanceFee).toFixed(2);
+
+    document.getElementById('balance').value = balance;
+}
+
+document.getElementById('amount_retained').addEventListener('input', function() {
+    manualTaxChange = false; // Reset manual tax change flag
+    calculateFees();
+});
+
+document.getElementById('application_fee').addEventListener('input', calculateFees);
+document.getElementById('biometric_fee').addEventListener('input', calculateFees);
+document.getElementById('advance').addEventListener('input', calculateFees);
+
+document.getElementById('taxes').addEventListener('input', function() {
+    manualTaxChange = true; // Set manual tax change flag
+    calculateFees();
+});
+
+$(document).ready(function () {
+
+    var emailValid = false;
+    var phoneValid = false;
+
+    $('#application_type').change(function () {
+        var appFee = parseFloat($(this).find(':selected').data('appfee'));
+        var biomFee = parseFloat($(this).find(':selected').data('biomfee'));
+
+        $('#application_fee').val(appFee);
+        $('#biometric_fee').val(biomFee);
+        calculateFees();
+    });
+
+    $('#email').on('blur', function() {
+        var email = $(this).val();
+        $.ajax({
+            url: "{% url 'check_email' %}",
+            data: {
+                'email': email
+            },
+            dataType: 'json',
+            success: function(data) {
+                if (data.exists) {
+                    $('#email_message').text('Email already exists with Client ID: ' + data.client_id);
+                    emailValid = false;
+                } else {
+                    $('#email_message').text('');
+                    emailValid = true;
+                }
+            }
+        });
+    });
+
+    $('#phone').on('blur', function() {
+        var phone = $(this).val();
+        $.ajax({
+            url: "{% url 'check_phone' %}",
+            data: {
+                'phone': phone
+            },
+            dataType: 'json',
+            success: function(data) {
+                if (data.exists) {
+                    $('#phone_message').text('Phone number already exists with Client ID: ' + data.client_id);
+                    phoneValid = false;
+                } else {
+                    $('#phone_message').text('');
+                    phoneValid = true;
+                }
+            }
+        });
+    });
+});
+
+</script>
+{% endblock %}

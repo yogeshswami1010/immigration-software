@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<style>
+    .accounts-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: #fff;
+    }
+    .accounts-header {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .accounts-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+    }
+    .accounts-header a {
+        color: #0d6efd;
+        text-decoration: none;
+        font-size: 14px;
+    }
+    .accounts-content {
+        padding: 20px 30px;
+    }
+    .account-type-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0;
+    }
+    .account-type-tab {
+        padding: 12px 20px;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-size: 14px;
+        font-weight: 600;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .account-type-tab:hover {
+        color: #0d6efd;
+    }
+    .account-type-tab.active {
+        color: #0d6efd;
+        border-bottom-color: #0d6efd;
+    }
+    .account-category {
+        margin-bottom: 30px;
+    }
+    .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+    }
+    .category-header h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+    }
+    .category-header a {
+        color: #0d6efd;
+        text-decoration: none;
+        font-size: 12px;
+    }
+    .category-content {
+        padding: 20px 0;
+    }
+    .account-item {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .account-item:hover {
+        background: #f8f9fa;
+    }
+    .account-item-info {
+        flex: 1;
+    }
+    .account-item-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 5px;
+    }
+    .account-item-meta {
+        font-size: 12px;
+        color: #6c757d;
+    }
+    .account-item-description {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .account-item-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .account-item-actions a {
+        color: #6c757d;
+        text-decoration: none;
+    }
+    .account-item-actions a:hover {
+        color: #0d6efd;
+    }
+    .empty-category {
+        padding: 20px;
+        text-align: center;
+        color: #6c757d;
+        font-size: 14px;
+    }
+    .add-account-link {
+        color: #0d6efd;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 10px;
+    }
+    .add-account-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+{% block main %}
+
+<div class="accounts-container">
+    <div class="accounts-header">
+        <div>
+            <h1>Chart of Accounts</h1>
+        </div>
+        <a href="{% url 'accounting_account_create' %}" class="btn btn-primary">Add a New Account</a>
+    </div>
+
+    <div class="accounts-content">
+        <div class="account-type-tabs">
+            <button class="account-type-tab {% if type_filter == 'asset' or not type_filter %}active{% endif %}" 
+                    onclick="filterAccounts('asset')">
+                Assets ({{ asset_count|default:0 }})
+            </button>
+            <button class="account-type-tab {% if type_filter == 'liability' %}active{% endif %}" 
+                    onclick="filterAccounts('liability')">
+                Liabilities & Credit Cards ({{ liability_count|default:0 }})
+            </button>
+            <button class="account-type-tab {% if type_filter == 'revenue' %}active{% endif %}" 
+                    onclick="filterAccounts('revenue')">
+                Income ({{ revenue_count|default:0 }})
+            </button>
+            <button class="account-type-tab {% if type_filter == 'expense' %}active{% endif %}" 
+                    onclick="filterAccounts('expense')">
+                Expenses ({{ expense_count|default:0 }})
+            </button>
+            <button class="account-type-tab {% if type_filter == 'equity' %}active{% endif %}" 
+                    onclick="filterAccounts('equity')">
+                Equity ({{ equity_count|default:0 }})
+            </button>
+        </div>
+
+        <form method="get" id="filterForm" style="display: none;">
+            <input type="hidden" name="type" id="typeFilter" value="{{ type_filter }}">
+        </form>
+
+        {% if type_filter == 'asset' or not type_filter %}
+        <!-- Assets Section -->
+        <div class="account-category">
+            <div class="category-header">
+                <h3>Cash and Bank</h3>
+                <a href="#" class="help-link"><i class="feather-help-circle"></i></a>
+            </div>
+            <div class="category-content">
+                {% for account in accounts %}
+                    {% if account.account_type == 'asset' and account.name|lower|slice:":4" == 'cash' %}
+                    <div class="account-item">
+                        <div class="account-item-info">
+                            <div class="account-item-name">{{ account.name }}</div>
+                            <div class="account-item-meta">
+                                Last transaction on {{ account.updated_at|date:"F d, Y" }}
+                            </div>
+                            {% if account.description %}
+                            <div class="account-item-description">{{ account.description }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="account-item-actions">
+                            <a href="{% url 'accounting_account_edit' account.id %}"><i class="feather-edit-2"></i></a>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <a href="{% url 'accounting_account_create' %}?type=asset&category=cash" class="add-account-link">
+                    <i class="feather-plus"></i> Add a new account
+                </a>
+            </div>
+        </div>
+
+        <div class="account-category">
+            <div class="category-header">
+                <h3>Expected Payments from Customers</h3>
+                <a href="#" class="help-link"><i class="feather-help-circle"></i></a>
+            </div>
+            <div class="category-content">
+                {% for account in accounts %}
+                    {% if account.account_type == 'asset' and 'receivable' in account.name|lower %}
+                    <div class="account-item">
+                        <div class="account-item-info">
+                            <div class="account-item-name">{{ account.name }}</div>
+                            <div class="account-item-meta">
+                                Last transaction on {{ account.updated_at|date:"F d, Y" }}
+                            </div>
+                        </div>
+                        <div class="account-item-actions">
+                            <a href="{% url 'accounting_account_edit' account.id %}"><i class="feather-edit-2"></i></a>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <a href="{% url 'accounting_account_create' %}?type=asset&category=receivable" class="add-account-link">
+                    <i class="feather-plus"></i> Add a new account
+                </a>
+            </div>
+        </div>
+
+        <div class="account-category">
+            <div class="category-header">
+                <h3>Other Short-Term Asset</h3>
+                <a href="#" class="help-link"><i class="feather-help-circle"></i></a>
+            </div>
+            <div class="category-content">
+                {% for account in accounts %}
+                    {% if account.account_type == 'asset' and account.name|lower|slice:":4" != 'cash' and 'receivable' not in account.name|lower %}
+                    <div class="account-item">
+                        <div class="account-item-info">
+                            <div class="account-item-name">{{ account.name }}</div>
+                            <div class="account-item-meta">
+                                {% if account.get_balance %}
+                                Last transaction on {{ account.updated_at|date:"F d, Y" }}
+                                {% else %}
+                                No transactions for this account
+                                {% endif %}
+                            </div>
+                            {% if account.description %}
+                            <div class="account-item-description">{{ account.description }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="account-item-actions">
+                            <a href="{% url 'accounting_account_edit' account.id %}"><i class="feather-edit-2"></i></a>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <a href="{% url 'accounting_account_create' %}?type=asset" class="add-account-link">
+                    <i class="feather-plus"></i> Add a new account
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if type_filter == 'liability' or not type_filter %}
+        <!-- Liabilities Section -->
+        <div class="account-category">
+            <div class="category-header">
+                <h3>Liabilities & Credit Cards</h3>
+                <a href="#" class="help-link"><i class="feather-help-circle"></i></a>
+            </div>
+            <div class="category-content">
+                {% for account in accounts %}
+                    {% if account.account_type == 'liability' %}
+                    <div class="account-item">
+                        <div class="account-item-info">
+                            <div class="account-item-name">{{ account.name }}</div>
+                            <div class="account-item-meta">
+                                Last transaction on {{ account.updated_at|date:"F d, Y" }}
+                            </div>
+                        </div>
+                        <div class="account-item-actions">
+                            <a href="{% url 'accounting_account_edit' account.id %}"><i class="feather-edit-2"></i></a>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <a href="{% url 'accounting_account_create' %}?type=liability" class="add-account-link">
+                    <i class="feather-plus"></i> Add a new account
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if type_filter == 'revenue' or not type_filter %}
+        <!-- Income Section -->
+        <div class="account-category">
+            <div class="category-header">
+                <h3>Income</h3>
+                <a href="#" class="help-link"><i class="feather-help-circle"></i></a>
+            </div>
+            <div class="category-content">
+                {% for account in accounts %}
+                    {% if account.account_type == 'revenue' %}
+                    <div class="account-item">
+                        <div class="account-item-info">
+                            <div class="account-item-name">{{ account.name }}</div>
+                            <div class="account-item-meta">
+                                Last transaction on {{ account.updated_at|date:"F d, Y" }}
+                            </div>
+                        </div>
+                        <div class="account-item-actions">
+                            <a href="{% url 'accounting_account_edit' account.id %}"><i class="feather-edit-2"></i></a>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <a href="{% url 'accounting_account_create' %}?type=revenue" class="add-account-link">
+                    <i class="feather-plus"></i> Add a new account
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if type_filter == 'expense' or not type_filter %}
+        <!-- Expenses Section -->
+        <div class="account-category">
+            <div class="category-header">
+                <h3>Expenses</h3>
+                <a href="#" class="help-link"><i class="feather-help-circle"></i></a>
+            </div>
+            <div class="category-content">
+                {% for account in accounts %}
+                    {% if account.account_type == 'expense' %}
+                    <div class="account-item">
+                        <div class="account-item-info">
+                            <div class="account-item-name">{{ account.name }}</div>
+                            <div class="account-item-meta">
+                                Last transaction on {{ account.updated_at|date:"F d, Y" }}
+                            </div>
+                        </div>
+                        <div class="account-item-actions">
+                            <a href="{% url 'accounting_account_edit' account.id %}"><i class="feather-edit-2"></i></a>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <a href="{% url 'accounting_account_create' %}?type=expense" class="add-account-link">
+                    <i class="feather-plus"></i> Add a new account
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if type_filter == 'equity' or not type_filter %}
+        <!-- Equity Section -->
+        <div class="account-category">
+            <div class="category-header">
+                <h3>Equity</h3>
+                <a href="#" class="help-link"><i class="feather-help-circle"></i></a>
+            </div>
+            <div class="category-content">
+                {% for account in accounts %}
+                    {% if account.account_type == 'equity' %}
+                    <div class="account-item">
+                        <div class="account-item-info">
+                            <div class="account-item-name">{{ account.name }}</div>
+                            <div class="account-item-meta">
+                                Last transaction on {{ account.updated_at|date:"F d, Y" }}
+                            </div>
+                        </div>
+                        <div class="account-item-actions">
+                            <a href="{% url 'accounting_account_edit' account.id %}"><i class="feather-edit-2"></i></a>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <a href="{% url 'accounting_account_create' %}?type=equity" class="add-account-link">
+                    <i class="feather-plus"></i> Add a new account
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    function filterAccounts(type) {
+        document.getElementById('typeFilter').value = type;
+        document.getElementById('filterForm').submit();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<!-- [ page-header ] start -->
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Reports</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Reports</li>
+        </ul>
+    </div>
+</div>
+<!-- [ page-header ] end -->
+<!-- [ Main Content ] start -->
+<div class="main-content" style="min-height: 70vh;">
+    <div class="row">
+
+        <div class="col-lg-12">
+            <div class="card stretch stretch-full">
+                <div class="card-body">
+                    <form method="get" action="{% url 'reports' %}">
+                        <div class="row">
+                            <div class="col-md-3 mt-2">
+                                <label>Select Applicant Status</label>
+                                <select class="form-control" name="search_application_status" id="search_application_status">
+                                    <option value="">Select Application Status</option>
+                                    <option value="pending" {% if request.GET.search_application_status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="submitted" {% if request.GET.search_application_status == 'submitted' %}selected{% endif %}>Submitted/Complete</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mt-2">
+                                <label>Start date</label>
+                                <input type="date" class="form-control" id="report_start_date" name="report_start_date" max="{{ today }}" value="{{ request.GET.report_start_date }}">
+                            </div>
+                            <div class="col-md-4 mt-2">
+                                <label>End date</label>
+                                <input type="date" class="form-control" id="report_end_date" name="report_end_date" value="{{ request.GET.report_end_date }}">
+                            </div>
+                            <div class="col-md-4 mt-2">
+                                <label>Caseworker</label>
+                                <select class="form-control" name="report_caseworker" id="report_caseworker">
+                                    <option value="">Select Caseworker</option>
+                                    {% for worker in caseworkers %}
+                                    <option value="{{ worker.user.id }}" {% if request.GET.report_caseworker == worker.user.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ worker.user.first_name }} {{ worker.user.last_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-12 mt-2" align="center">
+                                <button type="submit" class="btn btn-primary">Search</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- [Mini] start -->
+        <div class="col-lg-4">
+            <div class="card mb-4 stretch stretch-full">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="avatar-text">
+                            <i class="feather feather-star"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">Total Applications</div>
+                        </div>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark">{{ total_applications }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4 stretch stretch-full">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="avatar-text">
+                            <i class="feather feather-star"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">Pending Application</div>
+                        </div>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark">{{ pending_applications }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4 stretch stretch-full">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="avatar-text">
+                            <i class="feather feather-star"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">Completed Applications</div>
+                        </div>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark">{{ completed_applications }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4 stretch stretch-full">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="avatar-text">
+                            <i class="feather feather-star"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">Backed Out Applications</div>
+                        </div>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark">{{ backed_out }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4 stretch stretch-full">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="avatar-text">
+                            <i class="feather feather-star"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">Total Revenue</div>
+                        </div>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark">{{ total_amount }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4 stretch stretch-full">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="avatar-text">
+                            <i class="feather feather-star"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">Total Pending Balance</div>
+                        </div>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark">{{ pending_balance }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4 stretch stretch-full">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="avatar-text">
+                            <i class="feather feather-star"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark">Overall Adjustment Amount</div>
+                        </div>
+                    </div>
+                    <div class="fs-4 fw-bold text-dark">{{ adjustment_amount }}</div>
+                </div>
+            </div>
+        </div>
+        <!-- [Mini] end !-->
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        // Additional JS can be added here if needed
+    });
+</script>
+{% endblock %}

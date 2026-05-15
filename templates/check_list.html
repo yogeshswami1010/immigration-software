@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<!-- [ page-header ] start -->
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Check List</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Check List</li>
+        </ul>
+    </div>
+    <div class="page-header-right ms-auto">
+        <button data-bs-toggle="modal" data-bs-target="#add_service" class="btn btn-primary">
+            <i class="feather-plus me-2"></i>
+            <span>Add New Item</span>
+        </button>
+    </div>
+</div>
+<!-- [ page-header ] end -->
+<!-- [ Main Content ] start -->
+<div class="main-content" style="min-height: 70vh;">
+    <div class="row">
+        <!-- [table] start -->
+        <div class="col-lg-12">
+            <div class="card stretch stretch-full">
+                <div class="card-header">
+                    <h4>All Items</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12" style="padding: 0 30px;">
+                            <table class="table table-hover table-responsive" id="datatable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for i in check_list %}
+                                    <tr>
+                                        <td>{{i.name}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [table] end !-->
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+<!-- Add Service Modal -->
+<div class="modal fade" id="add_service" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Add New Item</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'check_list' %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Item Name</label>
+                    <input name="check_list_name" id="check_list_name" class="form-control">
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Service Modal -->
+<div class="modal fade" id="edit_service" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Edit Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'services' %}">
+          {% csrf_token %}
+          <input type="hidden" name="service_id" id="edit_service_id">
+          <div class="modal-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Service Name</label>
+                    <input name="service_name" id="edit_service_name" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Application Fee</label>
+                    <input name="application_fee" id="edit_application_fee" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Biometric Fee</label>
+                    <input name="biometric_fee" id="edit_biometric_fee" class="form-control">
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Deactivate Service Modal -->
+<div class="modal fade" id="deactivate_service" tabindex="-1" aria-labelledby="deactivateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deactivateModalLabel">Deactivate Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'deactivate_service' %}">
+          {% csrf_token %}
+          <input type="hidden" name="service_id" id="deactivate_service_id">
+          <div class="modal-body">
+            <p>Are you sure you want to deactivate the service <strong id="deactivate_service_name"></strong>?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-danger">Deactivate</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+{% block script %}
+<script>
+    $(document).ready(function () {
+        $('#datatable').DataTable({
+            responsive: true
+        });
+
+        // Handle edit button click
+        $('.edit-btn').on('click', function () {
+            var serviceId = $(this).data('id');
+            var serviceName = $(this).data('name');
+            var applicationFee = $(this).data('appfee');
+            var biometricFee = $(this).data('biomfee');
+
+            $('#edit_service_id').val(serviceId);
+            $('#edit_service_name').val(serviceName);
+            $('#edit_application_fee').val(applicationFee);
+            $('#edit_biometric_fee').val(biometricFee);
+
+            $('#edit_service').modal('show');
+        });
+        // Handle deactivate button click
+        $('.deactivate-btn').on('click', function () {
+            var serviceId = $(this).data('id');
+            var serviceName = $(this).data('name');
+
+            $('#deactivate_service_id').val(serviceId);
+            $('#deactivate_service_name').text(serviceName);
+
+            $('#deactivate_service').modal('show');
+        });
+    });
+</script>
+{% endblock %}

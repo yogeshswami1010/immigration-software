@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<!-- [ page-header ] start -->
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">{{type}}</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">{{type}}</li>
+        </ul>
+    </div>
+</div>
+<!-- [ page-header ] end -->
+<!-- [ Main Content ] start -->
+<div class="main-content" style="min-height: 70vh;">
+    <div class="row">
+        <!-- [table] start -->
+        <div class="col-lg-12">
+            <div class="card stretch stretch-full">
+                <div class="card-body p-0">
+                    <div class="row">
+                        <div class="col-md-12" style="padding: 0 30px;">
+                            <table class="table table-hover table-responsive" id="datatable">
+                                <thead>
+                                    <tr>
+                                        <th>Client Id</th>
+                                        <th>Name</th>
+                                        <th>DOB</th>
+                                        <th>Visa Type</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for applicant in unassigned_applicants %}
+                                    <tr>
+                                        <td>{{ applicant.client_id }}</td>
+                                        <td>{{ applicant.f_name }} {{ applicant.l_name }}</td>
+                                        <td>{{ applicant.dob }}</td>
+                                        <td>{{ applicant.application_type }}</td>
+                                        <td>
+                                            <div class="hstack gap-2 justify-content-start">
+                                                <a href="{% url 'view_applicant' applicant.id %}" title="View Application" class="avatar-text avatar-md">
+                                                    <i class="feather feather-eye"></i>
+                                                </a>
+                                                <a href="{% url 'edit_applicant' applicant.id %}" title="Edit Application" class="avatar-text avatar-md">
+                                                    <i class="feather feather-edit-2"></i>
+                                                </a>
+                                                <a download href="media/{{applicant.service_agreement}}" title="Download Service Agreement" class="avatar-text avatar-md">
+                                                    <i class="feather feather-download"></i>
+                                                </a>
+                                                {% if request.user.profile.role == "manager" or request.user.profile.role == "admin" %}
+                                                <button class="avatar-text avatar-md assign-btn" title="Assign Caseworker" data-id="{{ applicant.id }}" data-name="{{ applicant.f_name }} {{ applicant.l_name }}">
+                                                    <i class="feather feather-user-plus"></i>
+                                                </button>
+                                                <button title="Add Payment" data-id="{{ applicant.id }}" data-balance="{{ applicant.balance_amount }}" data-name="{{ applicant.f_name }} {{ applicant.l_name }}" class="avatar-text avatar-md payment-btn">
+                                                    <i class="feather feather-dollar-sign"></i>
+                                                </button>
+                                                {% endif %}
+
+                                                {% if request.user.profile.role == "admin" %}
+                                                <form action="{% url 'delete_applicant' %}" method="post" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" value="{{applicant.id}}" name="id">
+                                                    <button type="submit" onclick="return confirm('Are you sure you want to delete - {{ applicant.f_name }} {{ applicant.l_name }} ({{applicant.client_id}})? Note: it cannot be reversed');" title="Delete Application" class="avatar-text avatar-md">
+                                                        <i class="feather feather-trash-2"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [table] end !-->
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+<!-- Assign Caseworker Modal -->
+<div class="modal fade" id="assignCaseworkerModal" tabindex="-1" aria-labelledby="assignCaseworkerLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="assignCaseworkerLabel">Assign Caseworker to <span id="applicantName"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'assign_caseworker' %}">
+          {% csrf_token %}
+          <input type="hidden" name="applicant_id" id="applicantId">
+          <div class="modal-body">
+            <div class="form-group">
+                <label for="caseworker">Select Caseworker</label>
+                <select name="caseworker_id" id="caseworker" class="form-control">
+                    {% for caseworker in caseworkers %}
+                        <option value="{{ caseworker.user.id }}">{{ caseworker.user.first_name }} {{ caseworker.user.last_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Assign Caseworker</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="paymentModalLabel">Add Payment for <span id="paymentApplicantName"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'add_payment' %}" id="paymentForm">
+          {% csrf_token %}
+          <input type="hidden" name="applicant_id" id="paymentApplicantId">
+          <div class="modal-body">
+            <div class="form-group">
+                <label for="applicantBalance">Balance Amount</label>
+                <input type="number" name="balance" id="applicantBalance" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="paymentAmount">Enter Amount</label>
+                <input type="number" step="0.01" name="amount" id="paymentAmount" class="form-control" required min="0">
+            </div>
+            <div class="form-group">
+                <label for="adjustAmount">Adjustment Amount</label>
+                <input type="number" step="0.01" name="adjustAmount" id="adjustAmount" class="form-control" value="0" required min="0">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Add Payment</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        $('#datatable').DataTable({
+            responsive: true
+        });
+    });
+
+    // Handle assign button click
+    $('.assign-btn').on('click', function () {
+        var applicantId = $(this).data('id');
+        var applicantName = $(this).data('name');
+        $('#applicantId').val(applicantId);
+        $('#applicantName').text(applicantName);
+        $('#assignCaseworkerModal').modal('show');
+    });
+
+    // Handle payment button click
+    $('.payment-btn').on('click', function () {
+        var applicantId = $(this).data('id');
+        var applicantName = $(this).data('name');
+        var balance = $(this).data('balance');
+
+        $('#paymentApplicantId').val(applicantId);
+        $('#paymentApplicantName').text(applicantName);
+        $('#applicantBalance').val(balance);
+
+        $('#paymentModal').modal('show');
+    });
+
+    // Handle form submission for payment
+    $('#paymentForm').on('submit', function (e) {
+        var balance = parseFloat($('#applicantBalance').val());
+        var amount = parseFloat($('#paymentAmount').val());
+
+        if (amount > balance) {
+            e.preventDefault(); // Prevent form submission
+            alert('Error: Payment amount cannot be greater than the balance.');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block style %}
+<style>
+/* Container styling */
+.select2-container {
+    width: 100% !important;
+    display: block;  /* Added to contain everything */
+}
+
+/* Selection box styling */
+.select2-container .select2-selection--multiple {
+    min-height: 40px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 4px;
+    overflow: hidden;  /* Added to prevent content overflow */
+}
+
+/* Selected items styling */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: 2px 4px;
+    float: none;  /* Remove float */
+}
+
+/* Search box styling - Prevent overflow */
+.select2-container--default .select2-search--inline .select2-search__field {
+    color: #495057;
+    width: 100% !important;
+    margin: 0;
+    padding: 10px;
+    border: none !important;  /* Remove any border */
+    outline: none !important; /* Remove outline */
+    box-shadow: none !important; /* Remove box shadow */
+}
+
+/* Hide the extra button/icon */
+.select2-search-choice-close {
+    display: none !important;
+}
+
+/* Container for selected items and search */
+.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    display: flex;
+    flex-wrap: wrap;
+    width: auto !important;
+    margin: 0;
+    padding: 0 5px;
+    white-space: normal;  /* Allow text to wrap */
+}
+.select2-container .select2-selection--multiple .select2-selection__rendered .select2-selection__choice .select2-selection__choice__remove {
+    width: auto !important;
+    height: auto !important;
+    top: 6px;
+    right: 0px;
+    background: #fff;
+    color: red;
+    border: none;
+}
+.select2-container--default .select2-selection--multiple .select2-selection__clear {
+    display: none;
+}
+.select2-container .select2-selection--multiple .select2-search .select2-search__field {
+    height: 34px;
+}
+/* Remove any extra spacing or elements */
+.select2-search--inline {
+    float: none !important;
+    display: inline-block;
+    width: 100%;
+}
+</style>
+{% endblock %}
+{% block main %}
+<!-- [ page-header ] start -->
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Services</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Services</li>
+        </ul>
+    </div>
+    {% if request.user.profile.role == "manager" or request.user.profile.role == "admin" %}
+    <div class="page-header-right ms-auto">
+        <button data-bs-toggle="modal" data-bs-target="#add_service" class="btn btn-primary">
+            <i class="feather-plus me-2"></i>
+            <span>Add Service</span>
+        </button>
+    </div>
+    {% endif %}
+</div>
+<!-- [ page-header ] end -->
+<!-- [ Main Content ] start -->
+<div class="main-content" style="min-height: 70vh;">
+    <div class="row">
+        <!-- [table] start -->
+        <div class="col-lg-12">
+            <div class="card stretch stretch-full">
+                <div class="card-body p-0">
+                    <div class="row">
+                        <div class="col-md-12" style="padding: 0 30px;">
+                            <table class="table table-hover table-responsive" id="datatable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Application Fee</th>
+                                        <th>Biometric Fee</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for service in services %}
+                                    <tr>
+                                        <td>{{ service.name }}</td>
+                                        <td>{{ service.application_fee }}</td>
+                                        <td>{{ service.bio_metric_fee }}</td>
+                                        <td>
+                                            <div class="hstack gap-2 justify-content-start">
+                                                {% if request.user.profile.role == "manager" or request.user.profile.role == "admin" %}
+                                                <button class="avatar-text avatar-md edit-btn" title="Edit Service" data-id="{{ service.id }}" data-name="{{ service.name }}" data-appfee="{{ service.application_fee }}" data-biomfee="{{ service.bio_metric_fee }}">
+                                                    <i class="feather feather-edit-2"></i>
+                                                </button>
+                                                {% endif %}
+                                                <a download href="media/{{service.check_list}}" title="Download Check List" class="avatar-text avatar-md">
+                                                    <i class="feather feather-download"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- [table] end -->
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+
+{% if request.user.profile.role == "manager" or request.user.profile.role == "admin" %}
+<!-- Add Service Modal -->
+<div class="modal fade" id="add_service" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Add Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'services' %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Service Name</label>
+                    <input name="service_name" id="service_name" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Application Fee</label>
+                    <input name="application_fee" id="application_fee" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Biometric Fee</label>
+                    <input name="biometric_fee" id="biometric_fee" class="form-control">
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-12">
+                    <label>Checklist Items</label><br>
+                    <select class="select2 form-control" multiple="multiple" style="width: 100%;" name="checklists">
+                    {% for checklist in checklists %}
+                        <option value="{{ checklist.id }}">{{ checklist.name }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Service Modal -->
+<div class="modal fade" id="edit_service" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Edit Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'services' %}">
+          {% csrf_token %}
+          <input type="hidden" name="service_id" id="edit_service_id">
+          <div class="modal-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Service Name</label>
+                    <input name="service_name" id="edit_service_name" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Application Fee</label>
+                    <input name="application_fee" id="edit_application_fee" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label>Biometric Fee</label>
+                    <input name="biometric_fee" id="edit_biometric_fee" class="form-control">
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-12">
+                    <label>Checklist Items</label><br>
+                    <div class="row">
+                    <select class="select2" name="checklists" style="width: 100%;" id="edit_checklist_select" multiple="multiple">
+                        {% for checklist in checklists %}
+                            <option value="{{ checklist.id }}">{{ checklist.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        $('#datatable').DataTable({
+            responsive: true
+        });
+    });
+
+// Edit button click handler
+$('.edit-btn').on('click', function () {
+    var serviceId = $(this).data('id');
+    var serviceName = $(this).data('name');
+    var applicationFee = $(this).data('appfee');
+    var biometricFee = $(this).data('biomfee');
+
+    $('#edit_service_id').val(serviceId);
+    $('#edit_service_name').val(serviceName);
+    $('#edit_application_fee').val(applicationFee);
+    $('#edit_biometric_fee').val(biometricFee);
+
+    // Clear all selected options
+    $('#edit_checklist_select').val(null).trigger('change');
+
+    // Get the checklist items assigned to this service
+    $.ajax({
+        url: '/get-service-checklist/',
+        type: 'GET',
+        data: {
+            'service_id': serviceId
+        },
+        success: function(data) {
+            // Set the selected values
+            $('#edit_checklist_select').val(data.assigned_checklists).trigger('change');
+        },
+        error: function(xhr, status, error) {
+            console.error("An error occurred while fetching checklist items: ", error);
+        }
+    });
+
+    $('#edit_service').modal('show');
+});
+
+</script>
+{% endblock %}

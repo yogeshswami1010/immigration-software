@@ -1,0 +1,18 @@
+<li class="nxl-item nxl-hasmenu">
+    <a href="javascript:void(0);" class="nxl-link">
+        <span class="nxl-micon"><i class="feather-save"></i></span>
+        <span class="nxl-mtext">Accounting</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+    </a>
+    <ul class="nxl-submenu">
+        <li class="nxl-item"><a class="nxl-link" href="{% url 'accounting_invoices' %}">Invoices</a></li>
+        {# Customers and Products & Services removed - using rio.Applicant and rio.Services directly now #}
+        {# <li class="nxl-item"><a class="nxl-link" href="{% url 'accounting_customers' %}">Customers</a></li> #}
+        {# <li class="nxl-item"><a class="nxl-link" href="{% url 'accounting_products_services' %}">Products & Services</a></li> #}
+        <li class="nxl-item"><a class="nxl-link" href="{% url 'accounting_transactions' %}">Transactions</a></li>
+        <li class="nxl-item"><a class="nxl-link" href="{% url 'accounting_payments' %}">Payments</a></li>
+        <li class="nxl-item"><a class="nxl-link" href="{% url 'accounting_expenses' %}">Expenses</a></li>
+        <li class="nxl-item"><a class="nxl-link" href="{% url 'accounting_chart_of_accounts' %}">Chart of Accounts</a></li>
+        <li class="nxl-item"><a class="nxl-link" href="{% url 'accounting_reports' %}">Reports</a></li>
+        <li class="nxl-item"><a class="nxl-link" href="{% url 'accounting_invoice_settings' %}">Invoice Settings</a></li>
+    </ul>
+</li>

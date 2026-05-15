@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Business Information</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Business Information</li>
+        </ul>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Business Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Business Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{ business.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Address Line 1 <span class="text-danger">*</span></label>
+                            <input type="text" name="address_line1" class="form-control" value="{{ business.address_line1 }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Address Line 2</label>
+                            <input type="text" name="address_line2" class="form-control" value="{{ business.address_line2 }}">
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">City <span class="text-danger">*</span></label>
+                                <input type="text" name="city" class="form-control" value="{{ business.city }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Province <span class="text-danger">*</span></label>
+                                <input type="text" name="province" class="form-control" value="{{ business.province }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Postal Code <span class="text-danger">*</span></label>
+                                <input type="text" name="postal_code" class="form-control" value="{{ business.postal_code }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Country <span class="text-danger">*</span></label>
+                            <input type="text" name="country" class="form-control" value="{{ business.country }}" required>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Phone <span class="text-danger">*</span></label>
+                                <input type="text" name="phone" class="form-control" value="{{ business.phone }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Mobile</label>
+                                <input type="text" name="mobile" class="form-control" value="{{ business.mobile }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ business.email }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Website</label>
+                                <input type="url" name="website" class="form-control" value="{{ business.website }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Tax ID</label>
+                            <input type="text" name="tax_id" class="form-control" value="{{ business.tax_id }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Logo</label>
+                            {% if business.logo %}
+                            <div class="mb-2">
+                                <img src="{{ business.logo.url }}" alt="Logo" style="max-height: 100px;">
+                            </div>
+                            {% endif %}
+                            <input type="file" name="logo" class="form-control" accept="image/*">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'accounting_invoice_create' %}" class="btn btn-secondary w-100">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

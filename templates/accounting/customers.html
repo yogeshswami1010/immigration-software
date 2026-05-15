@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Customers</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Customers</li>
+        </ul>
+    </div>
+    <div class="page-header-right ms-auto d-flex align-items-center">
+        <a href="{% url 'accounting_customer_create' %}" class="btn btn-primary">Add Customer</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="card">
+        <div class="card-header">
+            <h5>Customer List</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <p class="text-muted">Use the search box in the table to filter customers.</p>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped" id="customersTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>City</th>
+                            <th>Total Invoiced</th>
+                            <th>Total Paid</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable with server-side processing
+        $('#customersTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{% url "accounting_datatable_customers" %}'
+            },
+            order: [[0, 'asc']],
+            pageLength: 25
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<style>
+    @media print {
+        .no-print { display: none; }
+    }
+    .invoice-preview {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 40px;
+    }
+    .invoice-header-preview {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+    .invoice-header-preview h1 {
+        font-size: 32px;
+        font-weight: 600;
+        margin: 0;
+    }
+    .business-info-preview {
+        margin-bottom: 30px;
+    }
+    .customer-info-preview {
+        margin-bottom: 30px;
+    }
+    .invoice-details-preview {
+        margin-bottom: 30px;
+    }
+    .items-table-preview {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+    }
+    .items-table-preview th,
+    .items-table-preview td {
+        padding: 12px;
+        border-bottom: 1px solid #dee2e6;
+        text-align: left;
+    }
+    .items-table-preview th {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+    .summary-preview {
+        text-align: right;
+        margin-bottom: 30px;
+    }
+    .summary-row-preview {
+        display: flex;
+        justify-content: flex-end;
+        padding: 5px 0;
+    }
+    .summary-row-preview.total {
+        font-size: 18px;
+        font-weight: 600;
+        border-top: 2px solid #dee2e6;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+{% block main %}
+
+<div class="invoice-preview">
+    <div class="no-print" style="margin-bottom: 20px;">
+        <a href="javascript:window.print()" class="btn btn-primary">Print</a>
+        <button type="button" class="btn btn-secondary" onclick="goBackToEdit()">Close</button>
+    </div>
+    
+    <div class="invoice-header-preview">
+        <div>
+            <h1>{% if invoice %}{{ invoice.title|default:"Invoice" }}{% else %}Invoice{% endif %}</h1>
+            {% if invoice and invoice.summary %}
+            <p style="color: #6c757d;">{{ invoice.summary }}</p>
+            {% endif %}
+        </div>
+        <div>
+            <strong>Invoice #:</strong> {% if invoice %}{{ invoice.invoice_number }}{% else %}NB00198{% endif %}<br>
+            <strong>Date:</strong> {% if invoice and invoice.invoice_date %}{{ invoice.invoice_date|date:"M d, Y" }}{% else %}{{ today|date:"M d, Y" }}{% endif %}<br>
+            <strong>Due Date:</strong> {% if invoice and invoice.due_date %}{{ invoice.due_date|date:"M d, Y" }}{% else %}{{ today|date:"M d, Y" }}{% endif %}
+        </div>
+    </div>
+    
+    <div class="business-info-preview">
+        <strong>{{ business.name }}</strong><br>
+        {{ business.address_line1 }}<br>
+        {% if business.address_line2 %}{{ business.address_line2 }}<br>{% endif %}
+        {{ business.city }}, {{ business.province }} {{ business.postal_code }}<br>
+        {{ business.country }}<br>
+        {% if business.phone %}Phone: {{ business.phone }}<br>{% endif %}
+        {% if business.mobile %}Mobile: {{ business.mobile }}<br>{% endif %}
+        {% if business.website %}{{ business.website }}{% endif %}
+    </div>
+    
+    {% if invoice and invoice.applicant %}
+    <div class="customer-info-preview">
+        <strong>Bill To:</strong><br>
+        {% with appl=invoice.applicant %}
+            {% if appl %}
+                {{ appl.f_name }} {% if appl.m_name %}{{ appl.m_name }} {% endif %}{{ appl.l_name }} ({{ appl.client_id }})<br>
+                {% if appl.address %}{{ appl.address }}<br>{% endif %}
+                {% if appl.email %}{{ appl.email }}{% endif %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    {% endif %}
+    
+    <table class="items-table-preview">
+        <thead>
+            <tr>
+                <th>Item</th>
+                {% if not invoice or invoice.show_quantity %}
+                <th>Quantity</th>
+                {% endif %}
+                {% if not invoice or invoice.show_price %}
+                <th>Price</th>
+                {% endif %}
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if invoice %}
+                {% if invoice.id %}
+                    {# Saved invoice - use .all() to get queryset #}
+                    {% for item in invoice.items.all %}
+                    <tr>
+                        <td>{% if item.service %}{{ item.service.name }}{% else %}{{ item.description|default:"Item" }}{% endif %}</td>
+                        {% if invoice.show_quantity %}
+                        <td>{{ item.quantity }}</td>
+                        {% endif %}
+                        {% if invoice.show_price %}
+                        <td>${{ item.unit_price|floatformat:2 }}</td>
+                        {% endif %}
+                        <td>${{ item.line_total|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        {% if not invoice.show_quantity and not invoice.show_price %}
+                            <td colspan="2" style="text-align: center; color: #6c757d;">No items added yet</td>
+                        {% else %}
+                            <td colspan="3" style="text-align: center; color: #6c757d;">No items added yet</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    {# Draft invoice - items is a list #}
+                    {% if invoice.items %}
+                        {% for item in invoice.items %}
+                        <tr>
+                            <td>{% if item.service %}{{ item.service.name }}{% else %}{{ item.description|default:"Item" }}{% endif %}</td>
+                            {% if invoice.show_quantity %}
+                            <td>{{ item.quantity }}</td>
+                            {% endif %}
+                            {% if invoice.show_price %}
+                            <td>${{ item.unit_price|floatformat:2 }}</td>
+                            {% endif %}
+                            <td>${{ item.line_total|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            {% if not invoice.show_quantity and not invoice.show_price %}
+                                <td colspan="2" style="text-align: center; color: #6c757d;">No items added yet</td>
+                            {% else %}
+                                <td colspan="3" style="text-align: center; color: #6c757d;">No items added yet</td>
+                            {% endif %}
+                        </tr>
+                    {% endif %}
+                {% endif %}
+            {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #6c757d;">No items added yet</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    
+    <div class="summary-preview">
+        <div class="summary-row-preview">
+            <span style="margin-right: 100px;">Subtotal:</span>
+            <span>${% if invoice %}{{ invoice.subtotal|floatformat:2 }}{% else %}0.00{% endif %}</span>
+        </div>
+        {% if invoice and invoice.discount_amount and invoice.discount_amount > 0 %}
+        <div class="summary-row-preview">
+            <span style="margin-right: 100px;">Discount:</span>
+            <span>-${{ invoice.discount_amount|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+        {% if invoice and invoice.tax_amount and invoice.tax_amount > 0 %}
+        <div class="summary-row-preview">
+            <span style="margin-right: 100px;">Tax:</span>
+            <span>${{ invoice.tax_amount|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+        <div class="summary-row-preview total">
+            <span style="margin-right: 100px;">Total:</span>
+            <span>${% if invoice %}{{ invoice.total_amount|floatformat:2 }}{% else %}0.00{% endif %}</span>
+        </div>
+    </div>
+    
+    {% if invoice and invoice.notes %}
+    <div style="margin-bottom: 20px;">
+        <strong>Notes:</strong><br>
+        {{ invoice.notes|linebreaks }}
+    </div>
+    {% endif %}
+    
+    {% if invoice and invoice.footer %}
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
+        {{ invoice.footer|linebreaks }}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    function goBackToEdit() {
+        // Try to close the window (works if opened by JavaScript)
+        // If window.opener exists, focus it first
+        if (window.opener && !window.opener.closed) {
+            window.opener.focus();
+        }
+        
+        // Attempt to close the window
+        // Note: Some browsers block window.close() for security reasons
+        // If it doesn't work, we'll navigate to the invoice page instead
+        window.close();
+        
+        // If window.close() doesn't work (browser blocked it), 
+        // navigate after a short delay
+        setTimeout(function() {
+            // Check if window is still open by trying to access window.location
+            // If we can still access it, the window didn't close, so navigate
+            try {
+                if (window.location) {
+                    {% if invoice and invoice.id %}
+                    window.location.href = '{% url "accounting_invoice_edit" invoice.id %}';
+                    {% else %}
+                    window.location.href = '{% url "accounting_invoice_create" %}';
+                    {% endif %}
+                }
+            } catch (e) {
+                // Window might have closed, do nothing
+            }
+        }, 200);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,814 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<style>
+    .transactions-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: #fff;
+    }
+    .transactions-header {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .transactions-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+    }
+    .alert-banner {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .alert-banner-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .alert-banner i {
+        font-size: 20px;
+        color: #ffc107;
+    }
+    .account-summary {
+        padding: 20px 30px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+    .account-select-wrapper {
+        flex: 1;
+    }
+    .account-select-wrapper select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .table-controls {
+        padding: 15px 30px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .table-controls-left {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    .table-controls-right {
+        display: flex;
+        gap: 10px;
+    }
+    .table-controls input[type="checkbox"] {
+        margin-right: 8px;
+    }
+    .action-icons {
+        display: flex;
+        gap: 5px;
+    }
+    .action-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid #dee2e6;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #6c757d;
+    }
+    .action-icon:hover {
+        background: #f8f9fa;
+        color: #0d6efd;
+    }
+    .transactions-table-wrapper {
+        padding: 0 30px;
+    }
+    .transactions-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .transactions-table thead {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .transactions-table th {
+        padding: 12px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+    .transactions-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .transactions-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+    .transactions-table tbody tr.selected {
+        background: #e7f1ff;
+    }
+    .amount-positive {
+        color: #198754;
+        font-weight: 600;
+    }
+    .amount-negative {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    .search-box {
+        position: relative;
+    }
+    .search-box input {
+        padding: 8px 35px 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        width: 250px;
+    }
+    .search-box i {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    .action-icon {
+        transition: all 0.2s ease;
+    }
+    .action-icon:hover {
+        transform: scale(1.1);
+    }
+    #selectedCount {
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+{% block main %}
+
+<div class="transactions-container">
+    <div class="transactions-header">
+        <h1>Transactions</h1>
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="addTransactionBtn" data-bs-toggle="dropdown">
+                Add transaction <i class="feather-chevron-down"></i>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="addTransactionBtn">
+                <li><a class="dropdown-item" href="#" onclick="openTransactionModal('deposit')">Add deposit</a></li>
+                <li><a class="dropdown-item" href="#" onclick="openTransactionModal('withdrawal')">Add withdrawal</a></li>
+            </ul>
+        </div>
+    </div>
+
+
+    <div class="account-summary">
+        <div class="account-select-wrapper">
+            <select id="accountSelect" class="form-select">
+                <option value="">All accounts</option>
+                {% for account in accounts %}
+                <option value="{{ account.id }}" {% if account_filter == account.id|stringformat:"s" %}selected{% endif %}>
+                    {{ account.name }} - ${{ account.get_balance|floatformat:2 }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="table-controls">
+        <div class="table-controls-left">
+            <input type="checkbox" id="selectAll">
+            <label for="selectAll" style="margin: 0; cursor: pointer;">Select all</label>
+            <div class="action-icons">
+                <div class="action-icon bulk-delete-btn" title="Delete Selected" style="display: none;"><i class="feather-trash-2"></i></div>
+                <div class="action-icon bulk-categorize-btn" title="Categorize Selected" style="display: none;"><i class="feather-check"></i></div>
+            </div>
+            <span id="selectedCount" style="display: none; margin-left: 10px; color: #0d6efd; font-weight: 600;"></span>
+        </div>
+        <div class="table-controls-right">
+            <button class="btn btn-primary btn-sm" id="filterBtn">
+                <i class="feather-filter"></i> Filter
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortBtn" data-bs-toggle="dropdown">
+                    <i class="feather-arrow-up-down"></i> Sort
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="sortBtn">
+                    <li><a class="dropdown-item sort-option" href="#" data-column="1" data-dir="desc">Date (Newest First)</a></li>
+                    <li><a class="dropdown-item sort-option" href="#" data-column="1" data-dir="asc">Date (Oldest First)</a></li>
+                    <li><a class="dropdown-item sort-option" href="#" data-column="5" data-dir="desc">Amount (Highest First)</a></li>
+                    <li><a class="dropdown-item sort-option" href="#" data-column="5" data-dir="asc">Amount (Lowest First)</a></li>
+                    <li><a class="dropdown-item sort-option" href="#" data-column="2" data-dir="asc">Description (A-Z)</a></li>
+                    <li><a class="dropdown-item sort-option" href="#" data-column="2" data-dir="desc">Description (Z-A)</a></li>
+                </ul>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="Search transactions" id="searchInput">
+                <i class="feather-search"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="transactions-table-wrapper">
+        <table class="transactions-table" id="transactionsTable">
+            <thead>
+                <tr>
+                    <th style="width: 40px;"></th>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Account</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th style="width: 80px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be loaded via AJAX -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal fade" id="transactionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="transactionForm" action="{% url 'accounting_transaction_create' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-6">
+                            <label class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" name="transaction_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-6 mb-6">
+                            <label class="form-label">Account <span class="text-danger">*</span></label>
+                            <select name="account" class="form-select" required>
+                                <option value="">Select Account</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-6">
+                            <label class="form-label">Amount <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">CAD</span>
+                                <input type="number" name="amount" class="form-control" step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-6">
+                            <label class="form-label">Description</label>
+                            <input type="text" name="description" class="form-control" placeholder="Write a Description" required>
+                        </div>
+                        <div class="col-md-6 mb-6">
+                            <label class="form-label">Type <span class="text-danger">*</span></label>
+                            <select name="transaction_type" class="form-select" required>
+                                <option value="deposit" selected>Deposit</option>
+                                <option value="withdrawal">Withdrawal</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-6">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="">Uncategorized Income</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-6">
+                            <label class="form-label">Reference Number</label>
+                            <input type="text" name="reference_number" class="form-control" placeholder="Reference number (optional)">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-primary w-100">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Filter Transactions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label class="form-label">Transaction Type</label>
+                        <select name="type" id="filterType" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdrawal">Withdrawal</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Account</label>
+                        <select name="account" id="filterAccount" class="form-select">
+                            <option value="">All Accounts</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.id }}">{{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select name="category" id="filterCategory" class="form-select">
+                            <option value="">All Categories</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.id }}">{{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date From</label>
+                            <input type="date" name="date_from" id="filterDateFrom" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date To</label>
+                            <input type="date" name="date_to" id="filterDateTo" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="clearFilters">Clear Filters</button>
+                <button type="button" class="btn btn-primary" id="applyFilters">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categorize Modal -->
+<div class="modal fade" id="categorizeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Categorize Transactions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Select a category for the selected transactions:</p>
+                <select id="categorySelect" class="form-select">
+                    <option value="">Uncategorized</option>
+                    {% for account in accounts %}
+                    <option value="{{ account.id }}">{{ account.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCategory">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    let transactionType = 'deposit';
+    
+    function openTransactionModal(type) {
+        transactionType = type;
+        $('#transactionForm input[name="transaction_type"]').val(type);
+        $('#transactionModal').modal('show');
+    }
+
+    $(document).ready(function() {
+        // Initialize filter variables
+        var currentFilters = {
+            account: $('#accountSelect').val() || '',
+            type: '',
+            category: '',
+            date_from: '',
+            date_to: ''
+        };
+
+        // Initialize DataTable with server-side processing
+        var table;
+        if ($.fn.DataTable) {
+            table = $('#transactionsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{% url "accounting_datatable_transactions" %}',
+                    data: function(d) {
+                        d.account = currentFilters.account;
+                        d.type = currentFilters.type;
+                        d.category = currentFilters.category;
+                        d.date_from = currentFilters.date_from;
+                        d.date_to = currentFilters.date_to;
+                    }
+                },
+                order: [[1, 'desc']],
+                pageLength: 25,
+                columnDefs: [
+                    { orderable: false, targets: [0, 6] }
+                ],
+                drawCallback: function() {
+                    // Reset select all checkbox when table redraws
+                    $('#selectAll').prop('checked', false);
+                    updateBulkActions();
+                }
+            });
+        }
+
+        // Select all checkbox functionality
+        $('#selectAll').on('change', function() {
+            var isChecked = $(this).prop('checked');
+            $('#transactionsTable tbody .transaction-checkbox').each(function() {
+                $(this).prop('checked', isChecked);
+                $(this).closest('tr').toggleClass('selected', isChecked);
+            });
+            updateBulkActions();
+        });
+
+        // Individual checkbox selection
+        $(document).on('change', '.transaction-checkbox', function() {
+            $(this).closest('tr').toggleClass('selected', $(this).prop('checked'));
+            updateBulkActions();
+        });
+
+        // Update bulk action buttons visibility
+        function updateBulkActions() {
+            var selectedCount = $('#transactionsTable tbody .transaction-checkbox:checked').length;
+            if (selectedCount > 0) {
+                $('.bulk-delete-btn, .bulk-categorize-btn').show();
+                $('#selectedCount').text(selectedCount + ' selected').show();
+            } else {
+                $('.bulk-delete-btn, .bulk-categorize-btn').hide();
+                $('#selectedCount').hide();
+            }
+        }
+
+        // Search functionality
+        var searchTimeout;
+        $('#searchInput').on('keyup', function() {
+            clearTimeout(searchTimeout);
+            var searchValue = $(this).val();
+            searchTimeout = setTimeout(function() {
+                table.search(searchValue).draw();
+            }, 500);
+        });
+
+        // Filter button
+        $('#filterBtn').on('click', function() {
+            // Pre-populate filter form with current values
+            $('#filterType').val(currentFilters.type);
+            $('#filterAccount').val(currentFilters.account);
+            $('#filterCategory').val(currentFilters.category);
+            $('#filterDateFrom').val(currentFilters.date_from);
+            $('#filterDateTo').val(currentFilters.date_to);
+            $('#filterModal').modal('show');
+        });
+
+        // Apply filters
+        $('#applyFilters').on('click', function() {
+            currentFilters.type = $('#filterType').val() || '';
+            currentFilters.account = $('#filterAccount').val() || '';
+            currentFilters.category = $('#filterCategory').val() || '';
+            currentFilters.date_from = $('#filterDateFrom').val() || '';
+            currentFilters.date_to = $('#filterDateTo').val() || '';
+            
+            // Update account select to match filter
+            $('#accountSelect').val(currentFilters.account);
+            
+            table.ajax.reload();
+            $('#filterModal').modal('hide');
+        });
+
+        // Clear filters
+        $('#clearFilters').on('click', function() {
+            $('#filterForm')[0].reset();
+            currentFilters = {
+                account: '',
+                type: '',
+                category: '',
+                date_from: '',
+                date_to: ''
+            };
+            $('#accountSelect').val('');
+            table.ajax.reload();
+            $('#filterModal').modal('hide');
+        });
+
+        // Sort options
+        $('.sort-option').on('click', function(e) {
+            e.preventDefault();
+            var column = parseInt($(this).data('column'));
+            var dir = $(this).data('dir');
+            table.order([column, dir]).draw();
+        });
+
+        // Account filter change
+        $('#accountSelect').on('change', function() {
+            currentFilters.account = $(this).val() || '';
+            table.ajax.reload();
+        });
+
+        // Bulk delete
+        $('.bulk-delete-btn').on('click', function() {
+            var selectedIds = [];
+            $('#transactionsTable tbody .transaction-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+            
+            if (selectedIds.length === 0) {
+                alert('Please select at least one transaction to delete.');
+                return;
+            }
+            
+            if (confirm('Are you sure you want to delete ' + selectedIds.length + ' transaction(s)? This action cannot be undone.')) {
+                var csrftoken = $('[name=csrfmiddlewaretoken]').val() || getCookie('csrftoken');
+                $.ajax({
+                    url: '{% url "accounting_transactions_bulk_delete" %}',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    data: {
+                        'ids': selectedIds.join(',')
+                    },
+                    success: function(response) {
+                        table.ajax.reload(null, false);
+                        $('#selectAll').prop('checked', false);
+                        updateBulkActions();
+                        var message = response.message || 'Transactions deleted successfully.';
+                        if (typeof showNotification !== 'undefined') {
+                            showNotification(message, 'success');
+                        } else {
+                            alert(message);
+                        }
+                    },
+                    error: function(xhr) {
+                        var errorMsg = 'Error deleting transactions.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        if (typeof showNotification !== 'undefined') {
+                            showNotification(errorMsg, 'error');
+                        } else {
+                            alert(errorMsg);
+                        }
+                    }
+                });
+            }
+        });
+
+        // Bulk categorize
+        $('.bulk-categorize-btn').on('click', function() {
+            var selectedIds = [];
+            $('#transactionsTable tbody .transaction-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+            
+            if (selectedIds.length === 0) {
+                alert('Please select at least one transaction to categorize.');
+                return;
+            }
+            
+            $('#categorizeModal').data('selected-ids', selectedIds);
+            $('#categorizeModal').modal('show');
+        });
+
+        // Save category
+        $('#saveCategory').on('click', function() {
+            var selectedIds = $('#categorizeModal').data('selected-ids') || [];
+            var categoryId = $('#categorySelect').val() || '';
+            
+            if (selectedIds.length === 0) {
+                alert('No transactions selected.');
+                return;
+            }
+            
+            var csrftoken = $('[name=csrfmiddlewaretoken]').val() || getCookie('csrftoken');
+            $.ajax({
+                url: '{% url "accounting_transactions_bulk_categorize" %}',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: {
+                    'ids': selectedIds.join(','),
+                    'category_id': categoryId
+                },
+                success: function(response) {
+                    table.ajax.reload(null, false);
+                    $('#selectAll').prop('checked', false);
+                    updateBulkActions();
+                    $('#categorizeModal').modal('hide');
+                    var message = response.message || 'Transactions categorized successfully.';
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification(message, 'success');
+                    } else {
+                        alert(message);
+                    }
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Error categorizing transactions.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification(errorMsg, 'error');
+                    } else {
+                        alert(errorMsg);
+                    }
+                }
+            });
+        });
+
+        // Handle transaction form submission via AJAX
+        // Unbind any existing handlers to prevent duplicates
+        $('#transactionForm').off('submit').on('submit', function(e) {
+            e.preventDefault();
+            
+            var form = $(this);
+            var formData = new FormData(this);
+            
+            // Prevent multiple submissions
+            var submitBtn = form.find('button[type="submit"]');
+            if (submitBtn.prop('disabled')) {
+                return false; // Already submitting
+            }
+            
+            // Show loading state
+            var originalText = submitBtn.html();
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Saving...');
+            
+            $.ajax({
+                url: form.attr('action'),
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    // Close modal
+                    $('#transactionModal').modal('hide');
+                    
+                    // Reset form
+                    form[0].reset();
+                    // Reset transaction type to default
+                    $('#transactionForm select[name="transaction_type"]').val('deposit');
+                    
+                    // Reload DataTable
+                    if (table) {
+                        table.ajax.reload(null, false); // false = don't reset pagination
+                    }
+                    
+                    // Show success message (only once)
+                    var message = response.message || 'Transaction created successfully.';
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification(message, 'success');
+                    } else {
+                        alert(message);
+                    }
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Error creating transaction.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.status === 400 || xhr.status === 500) {
+                        // Try to extract error from HTML response
+                        try {
+                            var parser = new DOMParser();
+                            var doc = parser.parseFromString(xhr.responseText, 'text/html');
+                            var errorElement = doc.querySelector('.errorlist, .alert-danger, .error');
+                            if (errorElement) {
+                                errorMsg = errorElement.textContent.trim();
+                            }
+                        } catch (e) {
+                            errorMsg = 'An error occurred. Please check the form and try again.';
+                        }
+                    }
+                    
+                    if (typeof showNotification !== 'undefined') {
+                        showNotification(errorMsg, 'error');
+                    } else {
+                        alert(errorMsg);
+                    }
+                },
+                complete: function() {
+                    // Restore button state
+                    submitBtn.prop('disabled', false).html(originalText);
+                }
+            });
+        });
+
+        // Handle edit transaction button clicks
+        $(document).on('click', '.edit-transaction-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var transactionId = $(this).data('transaction-id');
+            // TODO: Implement edit functionality - could open a modal or redirect to edit page
+            alert('Edit functionality for transaction #' + transactionId + ' will be implemented.');
+        });
+
+        // Handle delete transaction button clicks
+        $(document).on('click', '.delete-transaction-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var transactionId = $(this).data('transaction-id');
+            var $btn = $(this);
+            
+            if (confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+                // Get CSRF token from the form or meta tag
+                var csrftoken = $('[name=csrfmiddlewaretoken]').val() || $('meta[name=csrf-token]').attr('content');
+                if (!csrftoken) {
+                    // Fallback: get from cookies
+                    csrftoken = getCookie('csrftoken');
+                }
+                
+                $.ajax({
+                    url: '{% url "accounting_transaction_delete" 0 %}'.replace('0', transactionId),
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        if (table) {
+                            table.ajax.reload(null, false);
+                        }
+                        var message = response.message || 'Transaction deleted successfully.';
+                        if (typeof showNotification !== 'undefined') {
+                            showNotification(message, 'success');
+                        } else {
+                            alert(message);
+                        }
+                    },
+                    error: function(xhr) {
+                        var errorMsg = 'Error deleting transaction.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        if (typeof showNotification !== 'undefined') {
+                            showNotification(errorMsg, 'error');
+                        } else {
+                            alert(errorMsg);
+                        }
+                    }
+                });
+            }
+        });
+
+        // Helper function to get cookie value
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}

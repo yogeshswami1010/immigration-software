@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Record Payment</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'accounting_payments' %}">Payments</a></li>
+            <li class="breadcrumb-item">Add</li>
+        </ul>
+    </div>
+    <div class="page-header-right ms-auto">
+        <a href="{% url 'accounting_payments' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Payment Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Customer <span class="text-danger">*</span></label>
+                            <select name="customer" id="customerSelect" class="form-select select2" required>
+                                <option value="">Select Customer</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if selected_invoice and selected_invoice.customer.id == customer.id %}selected{% endif %}>{{ customer.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Invoice (Optional)</label>
+                            <select name="invoice" id="invoiceSelect" class="form-select select2">
+                                <option value="">Select Invoice</option>
+                                {% for invoice in invoices %}
+                                <option value="{{ invoice.id }}" data-customer="{{ invoice.customer.id }}" {% if selected_invoice and selected_invoice.id == invoice.id %}selected{% endif %}>{{ invoice.invoice_number }} - Balance: ${{ invoice.get_balance|floatformat:2 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Payment Date <span class="text-danger">*</span></label>
+                            <input type="date" name="payment_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Amount <span class="text-danger">*</span></label>
+                            <input type="number" name="amount" id="amountInput" class="form-control" step="0.01" min="0.01" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                            <select name="payment_method" class="form-select" required>
+                                <option value="cash">Cash</option>
+                                <option value="check">Check</option>
+                                <option value="credit_card">Credit Card</option>
+                                <option value="debit_card">Debit Card</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="online">Online Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Reference Number</label>
+                            <input type="text" name="reference_number" class="form-control">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Account</label>
+                            <select name="account" class="form-select select2">
+                                <option value="">Select Account</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100">Record Payment</button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'accounting_payments' %}" class="btn btn-secondary w-100">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('.select2').select2({
+            width: '100%',
+            theme: 'bootstrap-5'
+        });
+        
+        var invoiceId = new URLSearchParams(window.location.search).get('invoice');
+        if (invoiceId) {
+            $('#invoiceSelect').val(invoiceId).trigger('change');
+        }
+        
+        // Filter invoices by customer
+        $('#customerSelect').on('change', function() {
+            var customerId = $(this).val();
+            $('#invoiceSelect option').each(function() {
+                var invoiceCustomerId = $(this).data('customer');
+                if (customerId && invoiceCustomerId && invoiceCustomerId != customerId) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
+            $('#invoiceSelect').trigger('change');
+        });
+        
+        // Set amount from invoice balance
+        $('#invoiceSelect').on('change', function() {
+            var selectedText = $(this).find('option:selected').text();
+            var match = selectedText.match(/Balance: \$([\d.]+)/);
+            if (match) {
+                $('#amountInput').val(match[1]);
+            }
+        });
+    });
+</script>
+{% endblock %}
+

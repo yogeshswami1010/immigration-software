@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<style>
+    .product-service-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 30px;
+    }
+    .product-service-header {
+        margin-bottom: 30px;
+    }
+    .product-service-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0 0 15px 0;
+        color: #212529;
+    }
+    .product-service-header p {
+        font-size: 14px;
+        color: #6c757d;
+        line-height: 1.6;
+    }
+    .form-section {
+        margin-bottom: 25px;
+    }
+    .form-section label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        display: block;
+    }
+    .form-section label .required {
+        color: #dc3545;
+    }
+    .form-section input[type="text"],
+    .form-section input[type="number"],
+    .form-section textarea,
+    .form-section select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .form-section textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    .checkbox-group {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+        margin-top: 3px;
+    }
+    .checkbox-group label {
+        font-weight: normal;
+        margin: 0;
+        cursor: pointer;
+    }
+    .checkbox-group .help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 3px;
+    }
+    .tax-section {
+        margin-top: 20px;
+    }
+    .tax-select-wrapper {
+        position: relative;
+    }
+    .add-tax-btn {
+        margin-top: 10px;
+        background: #0d6efd;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .add-tax-btn:hover {
+        background: #0b5ed7;
+    }
+    .form-actions {
+        margin-top: 30px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+</style>
+{% endblock %}
+{% block main %}
+
+<div class="product-service-container">
+    <div class="product-service-header">
+        <h1>Add a Product or Service</h1>
+        <p>Products and services that you buy from vendors are used as items on Bills to record those purchases, and the ones that you sell to customers are used as items on Invoices to record those sales.</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <label>Name <span class="required">*</span></label>
+            <input type="text" name="name" required>
+        </div>
+
+        <div class="form-section">
+            <label>Description</label>
+            <textarea name="description" placeholder="Enter a description for this product or service"></textarea>
+        </div>
+
+        <div class="form-section">
+            <label>Price</label>
+            <input type="number" name="price" step="0.01" min="0" value="0.00" required>
+        </div>
+
+        <div class="form-section">
+            <div class="checkbox-group">
+                <input type="checkbox" name="sell_this" id="sell_this" checked>
+                <div>
+                    <label for="sell_this">Sell this</label>
+                    <div class="help-text">Allow this product or service to be added to Invoices.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="checkbox-group">
+                <input type="checkbox" name="buy_this" id="buy_this">
+                <div>
+                    <label for="buy_this">Buy this</label>
+                    <div class="help-text">Allow this product or service to be added to Bills.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section tax-section">
+            <label>Sales tax</label>
+            <div class="tax-select-wrapper">
+                <select name="tax_rate" class="form-select">
+                    <option value="0.00">No tax</option>
+                    <option value="13.00" selected>HST (13%)</option>
+                    <option value="5.00">GST (5%)</option>
+                    <option value="8.00">PST (8%)</option>
+                </select>
+                <button type="button" class="add-tax-btn" id="addTaxBtn">
+                    <i class="feather-plus"></i> Add new tax
+                </button>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <div class="row">
+                <div class="col-md-6">
+                    <a href="{% url 'accounting_products_services' %}" class="btn btn-secondary w-100">Cancel</a>
+                </div>
+                <div class="col-md-6">
+                    <button type="submit" class="btn btn-primary w-100">Save</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $('#addTaxBtn').on('click', function() {
+            // This would open a modal to add a new tax rate
+            alert('Add new tax functionality - to be implemented');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<!-- [ page-header ] start -->
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Dashboard</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">View Applicant</li>
+        </ul>
+    </div>
+</div>
+<!-- [ page-header ] end -->
+<!-- [ Main Content ] start -->
+<div class="main-content pb-5" style="min-height: 70vh;">
+    <div class="row">
+        {% for field in applicant_fields %}
+        <div class="col-md-4 mt-2">
+            <label>{{ field.label }}</label>
+            {% if field.type == "textarea" %}
+                <textarea readonly class="form-control">{{ field.value }}</textarea>
+            {% else %}
+                <input readonly type="{{ field.type }}" class="form-control" value="{{ field.value }}">
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Biometrics & Medical</h3>
+        </div>
+        <div class="col-md-4 mt-2">
+            <input readonly type="checkbox" id="service_agreement_check" name="service_agreement_check" {% if applicant.service_agreement_check %}checked{% endif %}>
+            <label for="service_agreement_check">Is Service Agreement Signed?</label>
+        </div>
+        {% for field in select_fields %}
+        <div class="col-md-4 mt-2">
+            <label for="{{ field.name }}">{{ field.label }}</label>
+            <select name="{{ field.name }}" id="{{ field.name }}" readonly class="form-control">
+                <option value="" disabled {% if not field.value %}selected{% endif %}></option>
+                {% for option in field.options %}
+                <option value="{{ option.value }}" {% if field.value == option.value %}selected{% endif %}>
+                    {{ option.display }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endfor %}
+    </div>
+    <hr>
+    <!-- Representative Details -->
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Representative Details</h3>
+        </div>
+        <div class="col-md-4 mt-2">
+            <label>Representative First Name</label>
+            <input readonly type="text" id="r_f_name" name="r_f_name" value="{{ applicant.r_f_name }}" class="form-control">
+        </div>
+        <div class="col-md-4 mt-2">
+            <label>Representative Middle Name</label>
+            <input readonly type="text" id="r_m_name" name="r_m_name" value="{{ applicant.r_m_name }}" class="form-control">
+        </div>
+        <div class="col-md-4 mt-2">
+            <label>Representative Last Name</label>
+            <input readonly type="text" id="r_l_name" name="r_l_name" value="{{ applicant.r_l_name }}" class="form-control">
+        </div>
+    </div>
+
+    {% if request.user.profile.role == "admin" or request.user.profile.role == "manager" or request.user.profile.role == "accountant" %}
+    <hr style="margin-top: 15px;">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Payment History</h3>
+        </div>
+        {% for payment in payments %}
+        <div class="col-md-4 mt-2">
+            <label>Paid on</label>
+            <input value="{{ payment.added_at }}" class="form-control" disabled>
+        </div>
+        <div class="col-md-4 mt-2">
+            <label>Amount</label>
+            <input value="{{ payment.amount }}{% if payment.payment_method %}({{payment.payment_method}}){% endif %}" class="form-control" disabled>
+        </div>
+        <div class="col-md-4 mt-2">
+            <label>Added by</label>
+            <input value="{{ payment.added_by.first_name }} {{ payment.added_by.last_name }}" class="form-control" disabled>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <hr style="margin-top: 15px;">
+
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Documents Received</h3>
+        </div>
+        {% for assignment in checklist_assignments %}
+        <div class="col-md-3 mt-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="checklists" value="{{ assignment.id }}" id="checklist_{{ assignment.id }}" disabled {% if assignment.completed %}checked{% endif %}>
+                <label class="form-check-label" for="checklist_{{ assignment.id }}">
+                    {{ assignment.item.name }}
+                </label>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <hr style="margin-top: 15px;">
+
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Comments</h3>
+        </div>
+        <div class="col-md-12">
+            {% for comment in comments %}
+            <div class="mb-2">
+                <textarea class="form-control" disabled>
+ {{comment.added_at}}
+ {{ comment.added_by.first_name }}: {{ comment.comment }}
+ </textarea>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <hr>
+    <div class="row">
+        <div class="col-md-12">
+            <input type="checkbox" name="ready_to_review" id="ready_to_review" {% if applicant.ready_to_review %}checked{% endif %} disabled>
+            <label for="ready_to_review">Is Application Ready for Review?</label>
+        </div>
+        <hr style="margin-top: 15px;">
+        <div class="col-md-12">
+            <input type="checkbox" name="ready_to_submit" id="ready_to_submit" {% if applicant.ready_to_submit %}checked{% endif %} disabled>
+            <label for="ready_to_submit">Is Application Ready to Submit?</label>
+        </div>
+        <hr style="margin-top: 15px;">
+        <div class="col-md-12">
+            <input type="checkbox" name="submitted" id="submitted" {% if applicant.submitted %}checked{% endif %} disabled>
+            <label for="submitted">Is Application Submitted?</label>
+        </div>
+    </div>
+</div>
+<!-- [ Main Content ] end -->
+{% endblock %}

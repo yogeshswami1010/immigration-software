@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Products & Services</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Products & Services</li>
+        </ul>
+    </div>
+    <div class="page-header-right ms-auto d-flex align-items-center">
+        <a href="{% url 'accounting_product_service_create' %}" class="btn btn-primary">Add Product/Service</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="card">
+        <div class="card-header">
+            <h5>Products & Services List</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-3">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ search }}">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="product" {% if type_filter == 'product' %}selected{% endif %}>Product</option>
+                            <option value="service" {% if type_filter == 'service' %}selected{% endif %}>Service</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="table-responsive">
+                <table class="table table-striped" id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>SKU</th>
+                            <th>Price</th>
+                            <th>Cost</th>
+                            <th>Tax Rate</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        var typeFilter = $('select[name="type"]').val() || '';
+        
+        // Initialize DataTable with server-side processing
+        var table = $('#productsTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{% url "accounting_datatable_products" %}',
+                data: function(d) {
+                    d.type = typeFilter;
+                }
+            },
+            order: [[0, 'asc']],
+            pageLength: 25
+        });
+        
+        // Reload table when filter changes
+        $('form').on('submit', function(e) {
+            e.preventDefault();
+            typeFilter = $('select[name="type"]').val() || '';
+            table.ajax.reload();
+        });
+    });
+</script>
+{% endblock %}

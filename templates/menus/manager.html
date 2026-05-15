@@ -1,0 +1,93 @@
+<div class="navbar-content">
+    <ul class="nxl-navbar">
+        <li class="nxl-item nxl-caption">
+            <label>Navigation</label>
+        </li>
+        <li class="nxl-item ">
+            <a href="/dashboard" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-airplay"></i>
+                </span>
+                <span class="nxl-mtext">Dashboard</span>
+            </a>
+        </li>
+        <li class="nxl-item ">
+            <a href="/add-applicant" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-user-plus"></i>
+                </span>
+                <span class="nxl-mtext">Add Applicant</span>
+            </a>
+        </li>
+        <li class="nxl-item ">
+            <a href="/ready-for-review" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-folder"></i>
+                </span>
+                <span class="nxl-mtext">Ready for Review</span>
+            </a>
+        </li>
+        <li class="nxl-item nxl-hasmenu">
+            <a href="javascript:void(0);" class="nxl-link">
+                <span class="nxl-micon"><i class="feather-send"></i></span>
+                <span class="nxl-mtext">Applications</span><span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+            </a>
+            <ul class="nxl-submenu">
+                <li class="nxl-item"><a class="nxl-link" href="/unassigned-applications">Unassigned Applications</a></li>
+                <li class="nxl-item"><a class="nxl-link" href="/pending-applications">Pending Applications</a></li>
+                <li class="nxl-item"><a class="nxl-link" href="/submitted-applications">Submitted Applications</a></li>
+                <li class="nxl-item"><a class="nxl-link" href="/completed-applications">Completed Applications</a></li>
+                <li class="nxl-item"><a class="nxl-link" href="/search-applications">Search Applications</a></li>
+            </ul>
+        </li>
+        <li class="nxl-item ">
+            <a href="/services" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-briefcase"></i>
+                </span>
+                <span class="nxl-mtext">Services</span>
+            </a>
+        </li>
+        <li class="nxl-item ">
+            <a href="/check-list" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-list"></i>
+                </span>
+                <span class="nxl-mtext">Check List</span>
+            </a>
+        </li>
+        {% include 'menus/accounting_urls.html' %}
+        <li class="nxl-item ">
+            <a href="/reports" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-clipboard"></i>
+                </span>
+                <span class="nxl-mtext">Reports</span>
+            </a>
+        </li>
+        <li class="nxl-item ">
+            <a href="/export-applicants" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-file-text"></i>
+                </span>
+                <span class="nxl-mtext">Export</span>
+            </a>
+        </li>
+        <li class="nxl-item ">
+            <a href="/settings" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-settings"></i>
+                </span>
+                <span class="nxl-mtext">Settings</span>
+            </a>
+        </li>
+        <li class="nxl-item ">
+            <a href="\logout" class="nxl-link">
+                <span class="nxl-micon">
+                    <i class="feather-log-out"></i>
+                </span>
+                <span class="nxl-mtext">Logout</span>
+            </a>
+        </li>
+    </ul>
+</div>

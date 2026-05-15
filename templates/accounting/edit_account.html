@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Edit Account</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'accounting_chart_of_accounts' %}">Chart of Accounts</a></li>
+            <li class="breadcrumb-item">Edit</li>
+        </ul>
+    </div>
+    <div class="page-header-right ms-auto">
+        <a href="{% url 'accounting_chart_of_accounts' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Account Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{ account.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Account Type <span class="text-danger">*</span></label>
+                            <select name="account_type" class="form-select" required>
+                                {% for type, label in account.ACCOUNT_TYPE_CHOICES %}
+                                <option value="{{ type }}" {% if account.account_type == type %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Account Number</label>
+                            <input type="text" name="account_number" class="form-control" value="{{ account.account_number }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Parent Account (Optional)</label>
+                            <select name="parent_account" class="form-select select2">
+                                <option value="">None</option>
+                                {% for acc in accounts %}
+                                <option value="{{ acc.id }}" {% if account.parent_account and account.parent_account.id == acc.id %}selected{% endif %}>{{ acc.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3">{{ account.description }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_active" class="form-check-input" {% if account.is_active %}checked{% endif %}>
+                                <label class="form-check-label">Active</label>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100">Update Account</button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'accounting_chart_of_accounts' %}" class="btn btn-secondary w-100">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            width: '100%',
+            theme: 'bootstrap-5'
+        });
+    });
+</script>
+{% endblock %}
+

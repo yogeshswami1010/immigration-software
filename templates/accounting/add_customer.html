@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Add Customer</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'accounting_customers' %}">Customers</a></li>
+            <li class="breadcrumb-item">Add</li>
+        </ul>
+    </div>
+    <div class="page-header-right ms-auto">
+        <a href="{% url 'accounting_customers' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Link to Applicant (Optional)</label>
+                                <select name="applicant" class="form-select select2">
+                                    <option value="">None</option>
+                                    {% for applicant in applicants %}
+                                    <option value="{{ applicant.id }}">{{ applicant.f_name }} {{ applicant.l_name }} ({{ applicant.client_id }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input type="text" name="phone" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea name="address" class="form-control" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">City</label>
+                                <input type="text" name="city" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Province</label>
+                                <input type="text" name="province" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Postal Code</label>
+                                <input type="text" name="postal_code" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Country</label>
+                                <input type="text" name="country" class="form-control" value="Canada">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tax ID</label>
+                                <input type="text" name="tax_id" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100">Create Customer</button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'accounting_customers' %}" class="btn btn-secondary w-100">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            width: '100%',
+            theme: 'bootstrap-5'
+        });
+    });
+</script>
+{% endblock %}
+

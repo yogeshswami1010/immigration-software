@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<style>
+    .page-header-right {
+        margin-left: auto;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+    .w-50-px {
+        width: 50px;
+    }
+    .h-50-px {
+        height:50px;
+    }
+    .text-sm {
+        font-size: 12px;
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .status-draft { background-color: #e9ecef; color: #495057; }
+    .status-sent { background-color: #cfe2ff; color: #084298; }
+    .status-paid { background-color: #d1e7dd; color: #0f5132; }
+    .status-partial { background-color: #fff3cd; color: #856404; }
+    .status-overdue { background-color: #f8d7da; color: #842029; }
+    .status-cancelled { background-color: #f8d7da; color: #842029; }
+</style>
+{% endblock %}
+{% block main %}
+
+<!-- [ page-header ] start -->
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Invoices</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Invoices</li>
+        </ul>
+    </div>
+    <div class="page-header-right d-flex align-items-center">
+        <a href="{% url 'accounting_invoice_create' %}"><button class="btn btn-primary">Create an Invoice</button></a>
+    </div>
+</div>
+<!-- [ page-header ] end -->
+
+<div class="main-content" style="min-height: 79vh;">
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="card shadow-none border">
+              <div class="card-body p-20">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                  <div>
+                        <p class="fw-medium text-primary-light mb-1">Overdue</p>
+                    <h6 class="mb-0">${{ overdue_amount|floatformat:2 }} <span class="text-sm">CAD</span></h6>
+                  </div>
+                  <div class="w-50-px h-50-px bg-danger rounded-circle d-flex justify-content-center align-items-center">
+                      <i class="feather feather-alert-circle text-white" style="font-size: 25px;"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card shadow-none border">
+              <div class="card-body p-20">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                  <div>
+                        <p class="fw-medium text-primary-light mb-1">Total Outstanding</p>
+                    <h6 class="mb-0">${{ total_outstanding|floatformat:2 }} <span class="text-sm">CAD</span></h6>
+                  </div>
+                  <div class="w-50-px h-50-px bg-warning rounded-circle d-flex justify-content-center align-items-center">
+                      <i class="feather feather-dollar-sign text-white" style="font-size: 25px;"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card shadow-none border">
+              <div class="card-body p-20">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                  <div>
+                        <p class="fw-medium text-primary-light mb-1">Total Invoiced</p>
+                    <h6 class="mb-0">${{ total_invoiced|floatformat:2 }} <span class="text-sm">CAD</span></h6>
+                  </div>
+                  <div class="w-50-px h-50-px bg-info rounded-circle d-flex justify-content-center align-items-center">
+                      <i class="feather feather-file-text text-white" style="font-size: 25px;"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card shadow-none border">
+              <div class="card-body p-20">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                  <div>
+                        <p class="fw-medium text-primary-light mb-1">Total Paid</p>
+                    <h6 class="mb-0">${{ total_paid|floatformat:2 }} <span class="text-sm">CAD</span></h6>
+                  </div>
+                  <div class="w-50-px h-50-px bg-success rounded-circle d-flex justify-content-center align-items-center">
+                      <i class="feather feather-check-circle text-white" style="font-size: 25px;"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Invoice List</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-3">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <input type="text" name="invoice_number" id="invoiceNumberSearch" class="form-control" placeholder="Invoice Number" value="{{ invoice_number_filter }}">
+                        </div>
+                        <div class="col-md-2">
+                            <select name="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                                <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>Sent</option>
+                                <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                                <option value="partial" {% if status_filter == 'partial' %}selected{% endif %}>Partially Paid</option>
+                                <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="customer" class="form-select select2">
+                                <option value="">All Customers</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if customer_filter == customer.id|stringformat:"s" %}selected{% endif %}>{{ customer.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" name="date_from" class="form-control" value="{{ date_from }}" placeholder="From Date">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" name="date_to" class="form-control" value="{{ date_to }}" placeholder="To Date">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Filter</button>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped" id="invoicesTable">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be loaded via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('.select2').select2({
+            width: '100%',
+            theme: 'bootstrap-5'
+        });
+        
+        var invoiceNumberFilter = $('#invoiceNumberSearch').val() || '';
+        var statusFilter = $('select[name="status"]').val() || '';
+        var customerFilter = $('select[name="customer"]').val() || '';
+        var dateFrom = $('input[name="date_from"]').val() || '';
+        var dateTo = $('input[name="date_to"]').val() || '';
+        
+        // Initialize DataTable with server-side processing
+        var table = $('#invoicesTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{% url "accounting_datatable_invoices" %}',
+                data: function(d) {
+                    d.invoice_number = invoiceNumberFilter;
+                    d.status = statusFilter;
+                    d.customer = customerFilter;
+                    d.date_from = dateFrom;
+                    d.date_to = dateTo;
+                }
+            },
+            order: [[0, 'desc']],
+            pageLength: 25
+        });
+        
+        // Reload table when filters change
+        $('form').on('submit', function(e) {
+            e.preventDefault();
+            invoiceNumberFilter = $('#invoiceNumberSearch').val() || '';
+            statusFilter = $('select[name="status"]').val() || '';
+            customerFilter = $('select[name="customer"]').val() || '';
+            dateFrom = $('input[name="date_from"]').val() || '';
+            dateTo = $('input[name="date_to"]').val() || '';
+            table.ajax.reload();
+        });
+    });
+</script>
+{% endblock %}

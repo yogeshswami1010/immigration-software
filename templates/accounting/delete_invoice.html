@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Delete Invoice</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'accounting_invoices' %}">Invoices</a></li>
+            <li class="breadcrumb-item">Delete</li>
+        </ul>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Confirm Delete</h5>
+                </div>
+                <div class="card-body">
+                    <p>Are you sure you want to delete invoice <strong>{{ invoice.invoice_number }}</strong>?</p>
+                    <p class="text-danger">This action cannot be undone.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-danger w-100">Delete Invoice</button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'accounting_invoice_view' invoice.id %}" class="btn btn-secondary w-100">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

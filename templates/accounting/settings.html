@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load static %}
+{% block style %}
+<link href="{% static 'assets/vendors/css/quill.min.css' %}" rel="stylesheet">
+<style>
+    .settings-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: #fff;
+    }
+    .settings-header {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .settings-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+    }
+    .settings-tabs {
+        display: flex;
+        border-bottom: 2px solid #e9ecef;
+        padding: 0 30px;
+        background: #f8f9fa;
+    }
+    .settings-tab {
+        padding: 15px 25px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6c757d;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s;
+    }
+    .settings-tab:hover {
+        color: #0d6efd;
+        background: rgba(13, 110, 253, 0.05);
+    }
+    .settings-tab.active {
+        color: #0d6efd;
+        border-bottom-color: #0d6efd;
+        background: #fff;
+    }
+    .settings-content {
+        padding: 30px;
+    }
+    .settings-tab-content {
+        display: none;
+    }
+    .settings-tab-content.active {
+        display: block;
+    }
+    .tag-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+    .tag-item {
+        padding: 5px 12px;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .tag-item:hover {
+        background: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
+    .logo-preview {
+        max-width: 200px;
+        max-height: 200px;
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+    }
+    .logo-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 15px;
+    }
+    .logo-upload-area:hover {
+        border-color: #0d6efd;
+        background: #f8f9fa;
+    }
+    .form-section {
+        margin-bottom: 30px;
+    }
+    .form-section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .ql-editor {
+        min-height: 250px;
+    }
+</style>
+{% endblock %}
+{% block main %}
+
+<div class="settings-container">
+    <div class="settings-header">
+        <h1>Invoice Settings</h1>
+    </div>
+
+    <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="company">Company Details</button>
+        <button class="settings-tab" data-tab="email">Email Templates</button>
+        <button class="settings-tab" data-tab="tax">Tax Slabs</button>
+        <button class="settings-tab" data-tab="footer">Footer</button>
+        <button class="settings-tab" data-tab="notes">Notes / Terms</button>
+        <button class="settings-tab" data-tab="invoice">Invoice Settings</button>
+    </div>
+
+    <div class="settings-content">
+        <form method="post" id="settingsForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="tab" id="currentTab" value="company">
+
+            <!-- Company Details Tab -->
+            <div class="settings-tab-content active" id="tab-company">
+                <div class="form-section">
+                    <h3 class="form-section-title">Business Information</h3>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Business Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{ business.name }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tax ID</label>
+                            <input type="text" name="tax_id" class="form-control" value="{{ business.tax_id }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address Line 1 <span class="text-danger">*</span></label>
+                        <input type="text" name="address_line1" class="form-control" value="{{ business.address_line1 }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address Line 2</label>
+                        <input type="text" name="address_line2" class="form-control" value="{{ business.address_line2 }}">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">City <span class="text-danger">*</span></label>
+                            <input type="text" name="city" class="form-control" value="{{ business.city }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Province <span class="text-danger">*</span></label>
+                            <input type="text" name="province" class="form-control" value="{{ business.province }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Postal Code <span class="text-danger">*</span></label>
+                            <input type="text" name="postal_code" class="form-control" value="{{ business.postal_code }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Country <span class="text-danger">*</span></label>
+                        <input type="text" name="country" class="form-control" value="{{ business.country }}" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Phone <span class="text-danger">*</span></label>
+                            <input type="text" name="phone" class="form-control" value="{{ business.phone }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Mobile</label>
+                            <input type="text" name="mobile" class="form-control" value="{{ business.mobile }}">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" value="{{ business.email }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Website</label>
+                            <input type="url" name="website" class="form-control" value="{{ business.website }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Company Logo</h3>
+                    {% if business.logo %}
+                    <div class="mb-3">
+                        <img src="{{ business.logo.url }}" alt="Logo" class="logo-preview" id="logoPreview">
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <div class="logo-preview" id="logoPreview" style="display: none;"></div>
+                    </div>
+                    {% endif %}
+                    <div class="logo-upload-area" onclick="document.getElementById('logoInput').click()">
+                        <i class="feather-upload-cloud" style="font-size: 32px; color: #6c757d; margin-bottom: 10px;"></i>
+                        <p style="margin: 0; color: #6c757d;">Click to upload logo or drag and drop</p>
+                        <p style="font-size: 12px; color: #6c757d; margin-top: 5px;">PNG, JPG up to 5MB</p>
+                    </div>
+                    <input type="file" id="logoInput" name="logo" accept="image/*" style="display: none;">
+                    {% if business.logo %}
+                    <button type="button" class="btn btn-sm btn-danger" id="removeLogo">Remove Logo</button>
+                    <input type="hidden" name="remove_logo" id="removeLogoFlag" value="0">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Email Templates Tab -->
+            <div class="settings-tab-content" id="tab-email">
+                {% for template in templates %}
+                <div class="form-section">
+                    <h3 class="form-section-title">{{ template.get_template_type_display }}</h3>
+                    <input type="hidden" name="template_id_{{ template.id }}" value="{{ template.id }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" name="subject_{{ template.id }}" class="form-control" value="{{ template.subject }}" required>
+                        <small class="text-muted">You can use variables: <code>[invoice_number]</code>, <code>{customer_name}</code>, <code>&lt;total_amount&gt;</code>, etc.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Body</label>
+                        <div class="tag-picker">
+                            <span class="tag-item" data-tag="[invoice_number]" title="Invoice Number">Invoice Number</span>
+                            <span class="tag-item" data-tag="[customer_name]" title="Customer Name">Customer Name</span>
+                            <span class="tag-item" data-tag="[customer_email]" title="Customer Email">Customer Email</span>
+                            <span class="tag-item" data-tag="[customer_phone]" title="Customer Phone">Customer Phone</span>
+                            <span class="tag-item" data-tag="[invoice_date]" title="Invoice Date">Invoice Date</span>
+                            <span class="tag-item" data-tag="[due_date]" title="Due Date">Due Date</span>
+                            <span class="tag-item" data-tag="[total_amount]" title="Total Amount">Total Amount</span>
+                            <span class="tag-item" data-tag="[subtotal]" title="Subtotal">Subtotal</span>
+                            <span class="tag-item" data-tag="[tax_amount]" title="Tax Amount">Tax Amount</span>
+                            <span class="tag-item" data-tag="[discount_amount]" title="Discount Amount">Discount Amount</span>
+                            <span class="tag-item" data-tag="[paid_amount]" title="Paid Amount">Paid Amount</span>
+                            <span class="tag-item" data-tag="[balance_due]" title="Balance Due">Balance Due</span>
+                            <span class="tag-item" data-tag="[company_name]" title="Company Name">Company Name</span>
+                            <span class="tag-item" data-tag="[company_email]" title="Company Email">Company Email</span>
+                            <span class="tag-item" data-tag="[company_phone]" title="Company Phone">Company Phone</span>
+                            <span class="tag-item" data-tag="[company_address]" title="Company Address">Company Address</span>
+                            <span class="tag-item" data-tag="[invoice_url]" title="Invoice Preview URL">Invoice URL</span>
+                        </div>
+                        <div id="editor_{{ template.id }}" style="min-height: 300px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px;"></div>
+                        <textarea name="body_{{ template.id }}" id="body_{{ template.id }}" style="display: none;" required>{{ template.body }}</textarea>
+                        <div class="mt-2">
+                            <div class="alert alert-info mb-3">
+                                <strong>How to use variables:</strong> You can use variables in any of these formats:
+                                <ul class="mb-0 mt-2">
+                                    <li><code>[invoice_number]</code> - Square brackets format</li>
+                                    <li><code>{invoice_number}</code> - Curly braces format</li>
+                                    <li><code>&lt;invoice_number&gt;</code> - Angle brackets format</li>
+                                </ul>
+                                <strong class="mt-2 d-block">Example:</strong>
+                                <p class="mb-0">"Dear [customer_name], your invoice [invoice_number] for $[total_amount] is due on [due_date]."</p>
+                            </div>
+                            <small class="text-muted d-block mb-2"><strong>Available Variables:</strong></small>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block"><code>[invoice_number]</code> or <code>{invoice_number}</code> or <code>&lt;invoice_number&gt;</code> - Invoice number (e.g., RI000001)</small>
+                                    <small class="text-muted d-block"><code>[customer_name]</code> - Customer's full name</small>
+                                    <small class="text-muted d-block"><code>[customer_email]</code> - Customer's email address</small>
+                                    <small class="text-muted d-block"><code>[customer_phone]</code> - Customer's phone number</small>
+                                    <small class="text-muted d-block"><code>[invoice_date]</code> - Invoice date (formatted)</small>
+                                    <small class="text-muted d-block"><code>[due_date]</code> - Payment due date (formatted)</small>
+                                    <small class="text-muted d-block"><code>[total_amount]</code> - Total invoice amount ($X.XX)</small>
+                                    <small class="text-muted d-block"><code>[subtotal]</code> - Subtotal before tax and discount</small>
+                                    <small class="text-muted d-block"><code>[tax_amount]</code> - Tax amount</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block"><code>[discount_amount]</code> - Discount amount applied</small>
+                                    <small class="text-muted d-block"><code>[paid_amount]</code> - Amount already paid</small>
+                                    <small class="text-muted d-block"><code>[balance_due]</code> - Outstanding balance</small>
+                                    <small class="text-muted d-block"><code>[company_name]</code> - Your company name</small>
+                                    <small class="text-muted d-block"><code>[company_email]</code> - Your company email</small>
+                                    <small class="text-muted d-block"><code>[company_phone]</code> - Your company phone</small>
+                                    <small class="text-muted d-block"><code>[company_address]</code> - Your company full address</small>
+                                    <small class="text-muted d-block"><code>[invoice_url]</code> - Link to view invoice online</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_active_{{ template.id }}" class="form-check-input" id="active_{{ template.id }}" {% if template.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="active_{{ template.id }}">Active</label>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Footer Tab -->
+            <div class="settings-tab-content" id="tab-footer">
+                <div class="form-section">
+                    <h3 class="form-section-title">Default Invoice Footer</h3>
+                    <div class="mb-3">
+                        <label class="form-label">Footer Text</label>
+                        <textarea name="default_footer" class="form-control" rows="6" placeholder="Enter default footer text for invoices (e.g. tax information, thank you note)">{{ business.default_footer }}</textarea>
+                        <small class="text-muted">This footer will be used as default for new invoices. You can override it when creating individual invoices.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes / Terms Tab -->
+            <div class="settings-tab-content" id="tab-notes">
+                <div class="form-section">
+                    <h3 class="form-section-title">Default Notes / Terms</h3>
+                    <div class="mb-3">
+                        <label class="form-label">Notes / Terms</label>
+                        <textarea name="default_notes_terms" class="form-control" rows="8" placeholder="Enter default notes or terms of service that will be visible to your customers">{{ business.default_notes_terms }}</textarea>
+                        <small class="text-muted">This text will be used as default for new invoices. You can override it when creating individual invoices.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tax Slabs Tab -->
+            <div class="settings-tab-content" id="tab-tax">
+                <div class="form-section">
+                    <h3 class="form-section-title">Tax Slabs</h3>
+                    <p class="text-muted mb-3">Manage tax rates that can be applied to invoice items (e.g., GST, HST, PST)</p>
+                    
+                    <div id="taxSlabsList">
+                        {% for tax in tax_slabs %}
+                        <div class="card mb-3 tax-slab-item" data-tax-id="{{ tax.id }}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4">
+                                        <input type="text" name="tax_name_{{ tax.id }}" class="form-control" value="{{ tax.name }}" placeholder="Tax Name (e.g., GST)" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group">
+                                            <input type="number" name="tax_rate_{{ tax.id }}" class="form-control" value="{{ tax.rate }}" step="0.01" min="0" max="100" placeholder="Rate" required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="tax_default_{{ tax.id }}" class="form-check-input" id="tax_default_{{ tax.id }}" {% if tax.is_default %}checked{% endif %}>
+                                            <label class="form-check-label" for="tax_default_{{ tax.id }}">Default</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="tax_active_{{ tax.id }}" class="form-check-input" id="tax_active_{{ tax.id }}" {% if tax.is_active %}checked{% endif %}>
+                                            <label class="form-check-label" for="tax_active_{{ tax.id }}">Active</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-sm btn-danger remove-tax-slab" data-tax-id="{{ tax.id }}">×</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No tax slabs configured. Add one below.</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" id="addTaxSlab">Add Tax Slab</button>
+                </div>
+            </div>
+
+            <!-- Invoice Settings Tab -->
+            <div class="settings-tab-content" id="tab-invoice">
+                <div class="form-section">
+                    <h3 class="form-section-title">Invoice Defaults</h3>
+                    <div class="mb-3">
+                        <label class="form-label">Default Due Days <span class="text-danger">*</span></label>
+                        <input type="number" name="default_due_days" class="form-control" value="{{ business.default_due_days }}" min="0" required>
+                        <small class="text-muted">Number of days after invoice date that payment is due (e.g., 30 for Net 30)</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <button type="submit" class="btn btn-primary w-100">Save Settings</button>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'accounting_invoices' %}" class="btn btn-secondary w-100">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'assets/vendors/js/quill.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Tab switching
+        $('.settings-tab').on('click', function() {
+            var tabName = $(this).data('tab');
+            
+            // Update active tab
+            $('.settings-tab').removeClass('active');
+            $(this).addClass('active');
+            
+            // Update active content
+            $('.settings-tab-content').removeClass('active');
+            $('#tab-' + tabName).addClass('active');
+            
+            // Update hidden input
+            $('#currentTab').val(tabName);
+        });
+
+        // Initialize Quill editors for email templates
+        var quillEditors = {};
+        {% for template in templates %}
+        (function() {
+            var templateId = {{ template.id }};
+            var editorId = 'editor_{{ template.id }}';
+            var textareaId = 'body_{{ template.id }}';
+            
+            var quill = new Quill('#' + editorId, {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'align': [] }],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                }
+            });
+            
+            // Set initial content
+            var textarea = $('#' + textareaId);
+            var initialContent = textarea.val();
+            if (initialContent) {
+                quill.root.innerHTML = initialContent;
+            }
+            
+            quillEditors[templateId] = quill;
+            
+            // Update hidden textarea when editor content changes
+            quill.on('text-change', function() {
+                $('#' + textareaId).val(quill.root.innerHTML);
+            });
+        })();
+        {% endfor %}
+
+        // Tag picker functionality - insert into Quill editor
+        $(document).on('click', '.tag-item', function() {
+            var tag = $(this).data('tag');
+            var formSection = $(this).closest('.form-section');
+            var templateId = formSection.find('input[name^="template_id_"]').val();
+            var quill = quillEditors[templateId];
+            
+            if (quill) {
+                var range = quill.getSelection(true);
+                quill.insertText(range.index, tag, 'user');
+                quill.setSelection(range.index + tag.length);
+            }
+        });
+
+        // Logo preview
+        $('#logoInput').on('change', function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = $('<img>').attr('src', e.target.result).css('max-width', '100%');
+                    $('#logoPreview').html(img).show();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Remove logo
+        $('#removeLogo').on('click', function() {
+            if (confirm('Are you sure you want to remove the logo?')) {
+                $('#logoPreview').hide();
+                $('#logoInput').val('');
+                $('#removeLogoFlag').val('1');
+                $(this).hide();
+            }
+        });
+
+        // Form submission - preserve current tab and sync Quill content
+        $('#settingsForm').on('submit', function() {
+            var activeTab = $('.settings-tab.active').data('tab');
+            $('#currentTab').val(activeTab);
+            
+            // Sync all Quill editors to their hidden textareas before submission
+            for (var templateId in quillEditors) {
+                var quill = quillEditors[templateId];
+                var textareaId = 'body_' + templateId;
+                $('#' + textareaId).val(quill.root.innerHTML);
+            }
+        });
+
+        // Tax Slab management
+        var taxSlabCounter = {{ tax_slabs|length|default:0 }};
+        
+        $('#addTaxSlab').on('click', function() {
+            taxSlabCounter++;
+            var newTaxHtml = `
+                <div class="card mb-3 tax-slab-item" data-tax-id="new_${taxSlabCounter}">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <input type="text" name="tax_name_new_${taxSlabCounter}" class="form-control" placeholder="Tax Name (e.g., GST)" required>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <input type="number" name="tax_rate_new_${taxSlabCounter}" class="form-control" step="0.01" min="0" max="100" placeholder="Rate" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="tax_default_new_${taxSlabCounter}" class="form-check-input" id="tax_default_new_${taxSlabCounter}">
+                                    <label class="form-check-label" for="tax_default_new_${taxSlabCounter}">Default</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="tax_active_new_${taxSlabCounter}" class="form-check-input" id="tax_active_new_${taxSlabCounter}" checked>
+                                    <label class="form-check-label" for="tax_active_new_${taxSlabCounter}">Active</label>
+                                </div>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-sm btn-danger remove-tax-slab">×</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#taxSlabsList').append(newTaxHtml);
+        });
+
+        $(document).on('click', '.remove-tax-slab', function() {
+            if (confirm('Are you sure you want to remove this tax slab?')) {
+                $(this).closest('.tax-slab-item').remove();
+            }
+        });
+    });
+</script>
+{% endblock %}
+

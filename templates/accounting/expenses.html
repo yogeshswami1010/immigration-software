@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Expenses</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Expenses</li>
+        </ul>
+    </div>
+    <div class="page-header-right ms-auto d-flex align-items-center">
+        <a href="{% url 'accounting_expense_create' %}" class="btn btn-primary">Add Expense</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Total Expenses</h6>
+                    <h4 class="text-danger">${{ total_expenses|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5>Expense List</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-3">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <select name="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="unpaid" {% if status_filter == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                            <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                            <option value="partial" {% if status_filter == 'partial' %}selected{% endif %}>Partially Paid</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="date_from" class="form-control" value="{{ date_from }}" placeholder="From Date">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="date_to" class="form-control" value="{{ date_to }}" placeholder="To Date">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="table-responsive">
+                <table class="table table-striped" id="expensesTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Vendor</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Payment Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        var statusFilter = $('select[name="status"]').val() || '';
+        var dateFrom = $('input[name="date_from"]').val() || '';
+        var dateTo = $('input[name="date_to"]').val() || '';
+        
+        // Initialize DataTable with server-side processing
+        var table = $('#expensesTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{% url "accounting_datatable_expenses" %}',
+                data: function(d) {
+                    d.status = statusFilter;
+                    d.date_from = dateFrom;
+                    d.date_to = dateTo;
+                }
+            },
+            order: [[0, 'desc']],
+            pageLength: 25
+        });
+        
+        // Reload table when filters change
+        $('form').on('submit', function(e) {
+            e.preventDefault();
+            statusFilter = $('select[name="status"]').val() || '';
+            dateFrom = $('input[name="date_from"]').val() || '';
+            dateTo = $('input[name="date_to"]').val() || '';
+            table.ajax.reload();
+        });
+    });
+</script>
+{% endblock %}
+

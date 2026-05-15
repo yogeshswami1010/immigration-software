@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Add Account</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'accounting_chart_of_accounts' %}">Chart of Accounts</a></li>
+            <li class="breadcrumb-item">Add</li>
+        </ul>
+    </div>
+    <div class="page-header-right ms-auto">
+        <a href="{% url 'accounting_chart_of_accounts' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Account Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required placeholder="Enter account name">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Account Type <span class="text-danger">*</span></label>
+                            <select name="account_type" id="accountType" class="form-select" required>
+                                <option value="">Select Type</option>
+                                <option value="asset" {% if request.GET.type == 'asset' %}selected{% endif %}>Asset</option>
+                                <option value="liability" {% if request.GET.type == 'liability' %}selected{% endif %}>Liability</option>
+                                <option value="equity" {% if request.GET.type == 'equity' %}selected{% endif %}>Equity</option>
+                                <option value="revenue" {% if request.GET.type == 'revenue' %}selected{% endif %}>Revenue</option>
+                                <option value="expense" {% if request.GET.type == 'expense' %}selected{% endif %}>Expense</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Account Number</label>
+                            <input type="text" name="account_number" class="form-control">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Parent Account (Optional)</label>
+                            <select name="parent_account" class="form-select select2">
+                                <option value="">None</option>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100">Create Account</button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="{% url 'accounting_chart_of_accounts' %}" class="btn btn-secondary w-100">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            width: '100%',
+            theme: 'bootstrap-5'
+        });
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block main %}
+
+<div class="page-header">
+    <div class="page-header-left d-flex align-items-center">
+        <div class="page-header-title">
+            <h5 class="m-b-10">Payments</h5>
+        </div>
+        <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Payments</li>
+        </ul>
+    </div>
+    <div class="page-header-right ms-auto d-flex align-items-center">
+        <a href="{% url 'accounting_payment_create' %}" class="btn btn-primary">Record Payment</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Total Payments</h6>
+                    <h4 class="text-success">${{ total_payments|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5>Payment List</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-3">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <select name="customer" class="form-select select2">
+                            <option value="">All Customers</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}" {% if customer_filter == customer.id|stringformat:"s" %}selected{% endif %}>{{ customer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="date_from" class="form-control" value="{{ date_from }}" placeholder="From Date">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="date_to" class="form-control" value="{{ date_to }}" placeholder="To Date">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="table-responsive">
+                <table class="table table-striped" id="paymentsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Invoice</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Reference</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('.select2').select2({
+            width: '100%',
+            theme: 'bootstrap-5'
+        });
+        
+        var customerFilter = $('select[name="customer"]').val() || '';
+        var dateFrom = $('input[name="date_from"]').val() || '';
+        var dateTo = $('input[name="date_to"]').val() || '';
+        
+        // Initialize DataTable with server-side processing
+        var table = $('#paymentsTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{% url "accounting_datatable_payments" %}',
+                data: function(d) {
+                    d.customer = customerFilter;
+                    d.date_from = dateFrom;
+                    d.date_to = dateTo;
+                }
+            },
+            order: [[0, 'desc']],
+            pageLength: 25
+        });
+        
+        // Reload table when filters change
+        $('form').on('submit', function(e) {
+            e.preventDefault();
+            customerFilter = $('select[name="customer"]').val() || '';
+            dateFrom = $('input[name="date_from"]').val() || '';
+            dateTo = $('input[name="date_to"]').val() || '';
+            table.ajax.reload();
+        });
+    });
+</script>
+{% endblock %}
+

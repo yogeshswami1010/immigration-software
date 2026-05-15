@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<style>
+    .reports-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: #fff;
+    }
+    .reports-header {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .reports-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+    }
+    .report-type-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        padding: 30px;
+    }
+    .report-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .report-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    .report-card.active {
+        border-color: #0d6efd;
+        background: #f0f7ff;
+    }
+    .report-card i {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+    .report-card h5 {
+        margin: 0 0 10px 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    .report-card p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 14px;
+    }
+    .filters-section {
+        padding: 20px 30px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .report-content {
+        padding: 30px;
+    }
+    .report-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .summary-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+    }
+    .summary-card h6 {
+        margin: 0 0 10px 0;
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .summary-card .value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #212529;
+    }
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .report-table th,
+    .report-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .report-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+    .report-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+</style>
+{% endblock %}
+{% block main %}
+
+<div class="reports-container">
+    <div class="reports-header">
+        <h1>Reports</h1>
+    </div>
+
+    <div class="report-type-cards">
+        <div class="report-card {% if report_type == 'profit_loss' %}active{% endif %}" onclick="selectReportType('profit_loss')">
+            <i class="feather feather-trending-up" style="color: #0d6efd;"></i>
+            <h5>Profit & Loss</h5>
+            <p>Income and expenses report</p>
+        </div>
+        <div class="report-card {% if report_type == 'transactions' %}active{% endif %}" onclick="selectReportType('transactions')">
+            <i class="feather feather-arrow-left-right" style="color: #198754;"></i>
+            <h5>Transactions</h5>
+            <p>All financial transactions</p>
+        </div>
+        <div class="report-card {% if report_type == 'invoices' %}active{% endif %}" onclick="selectReportType('invoices')">
+            <i class="feather feather-file-text" style="color: #ffc107;"></i>
+            <h5>Invoices</h5>
+            <p>Invoice details and status</p>
+        </div>
+        <div class="report-card {% if report_type == 'expenses' %}active{% endif %}" onclick="selectReportType('expenses')">
+            <i class="feather feather-dollar-sign" style="color: #dc3545;"></i>
+            <h5>Expenses</h5>
+            <p>Expense tracking report</p>
+        </div>
+        <div class="report-card {% if report_type == 'payments' %}active{% endif %}" onclick="selectReportType('payments')">
+            <i class="feather feather-credit-card" style="color: #6f42c1;"></i>
+            <h5>Payments</h5>
+            <p>Payment records</p>
+        </div>
+        <div class="report-card {% if report_type == 'balance_sheet' %}active{% endif %}" onclick="selectReportType('balance_sheet')">
+            <i class="feather feather-layers" style="color: #20c997;"></i>
+            <h5>Balance Sheet</h5>
+            <p>Assets, liabilities, equity</p>
+        </div>
+    </div>
+
+    {% if report_type %}
+    <div class="filters-section">
+        <form method="get" id="reportForm">
+            <input type="hidden" name="report_type" value="{{ report_type }}">
+            
+            <div class="filters-grid">
+                <div>
+                    <label class="form-label">Date From</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div>
+                    <label class="form-label">Date To</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                {% if report_type == 'transactions' or report_type == 'expenses' or report_type == 'balance_sheet' %}
+                <div>
+                    <label class="form-label">Account</label>
+                    <select name="account" class="form-select">
+                        <option value="">All Accounts</option>
+                        {% for account in accounts %}
+                        <option value="{{ account.id }}" {% if account_id == account.id|stringformat:"s" %}selected{% endif %}>
+                            {{ account.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                {% if report_type == 'profit_loss' or report_type == 'invoices' or report_type == 'payments' %}
+                <div>
+                    <label class="form-label">Customer</label>
+                    <select name="customer" class="form-select">
+                        <option value="">All Customers</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}" {% if customer_id == customer.id|stringformat:"s" %}selected{% endif %}>
+                            {{ customer.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                {% if report_type == 'transactions' %}
+                <div>
+                    <label class="form-label">Transaction Type</label>
+                    <select name="transaction_type" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="deposit" {% if transaction_type == 'deposit' %}selected{% endif %}>Deposit</option>
+                        <option value="withdrawal" {% if transaction_type == 'withdrawal' %}selected{% endif %}>Withdrawal</option>
+                    </select>
+                </div>
+                {% endif %}
+                {% if report_type == 'invoices' %}
+                <div>
+                    <label class="form-label">Invoice Status</label>
+                    <select name="invoice_status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="draft" {% if invoice_status == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="sent" {% if invoice_status == 'sent' %}selected{% endif %}>Sent</option>
+                        <option value="paid" {% if invoice_status == 'paid' %}selected{% endif %}>Paid</option>
+                        <option value="partial" {% if invoice_status == 'partial' %}selected{% endif %}>Partial</option>
+                        <option value="overdue" {% if invoice_status == 'overdue' %}selected{% endif %}>Overdue</option>
+                    </select>
+                </div>
+                {% endif %}
+                {% if report_type == 'expenses' %}
+                <div>
+                    <label class="form-label">Expense Status</label>
+                    <select name="expense_status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="paid" {% if expense_status == 'paid' %}selected{% endif %}>Paid</option>
+                        <option value="unpaid" {% if expense_status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                        <option value="partial" {% if expense_status == 'partial' %}selected{% endif %}>Partial</option>
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <div class="export-buttons">
+                    <a href="{% url 'accounting_reports' %}?report_type={{ report_type }}&date_from={{ date_from }}&date_to={{ date_to }}{% if account_id %}&account={{ account_id }}{% endif %}{% if customer_id %}&customer={{ customer_id }}{% endif %}{% if transaction_type %}&transaction_type={{ transaction_type }}{% endif %}{% if invoice_status %}&invoice_status={{ invoice_status }}{% endif %}{% if expense_status %}&expense_status={{ expense_status }}{% endif %}&export=csv" class="btn btn-outline-success btn-sm">
+                        <i class="feather feather-download"></i> Export CSV
+                    </a>
+                    {% if OPENPYXL_AVAILABLE %}
+                    <a href="{% url 'accounting_reports' %}?report_type={{ report_type }}&date_from={{ date_from }}&date_to={{ date_to }}{% if account_id %}&account={{ account_id }}{% endif %}{% if customer_id %}&customer={{ customer_id }}{% endif %}{% if transaction_type %}&transaction_type={{ transaction_type }}{% endif %}{% if invoice_status %}&invoice_status={{ invoice_status }}{% endif %}{% if expense_status %}&expense_status={{ expense_status }}{% endif %}&export=excel" class="btn btn-outline-success btn-sm">
+                        <i class="feather feather-download"></i> Export Excel
+                    </a>
+                    {% endif %}
+                    {% if REPORTLAB_AVAILABLE %}
+                    <a href="{% url 'accounting_reports' %}?report_type={{ report_type }}&date_from={{ date_from }}&date_to={{ date_to }}{% if account_id %}&account={{ account_id }}{% endif %}{% if customer_id %}&customer={{ customer_id }}{% endif %}{% if transaction_type %}&transaction_type={{ transaction_type }}{% endif %}{% if invoice_status %}&invoice_status={{ invoice_status }}{% endif %}{% if expense_status %}&expense_status={{ expense_status }}{% endif %}&export=pdf" class="btn btn-outline-danger btn-sm">
+                        <i class="feather feather-file-text"></i> Export PDF
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="report-content">
+        {% if report_type == 'profit_loss' %}
+            <div class="report-summary">
+                <div class="summary-card">
+                    <h6>Total Revenue</h6>
+                    <div class="value text-success">${{ total_revenue|floatformat:2 }}</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Total Expenses</h6>
+                    <div class="value text-danger">${{ total_expenses|floatformat:2 }}</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Net Profit</h6>
+                    <div class="value {% if net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        ${{ net_profit|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+            <!-- Revenue and Expenses tables would go here -->
+        
+        {% elif report_type == 'transactions' %}
+            <div class="report-summary">
+                <div class="summary-card">
+                    <h6>Total Deposits</h6>
+                    <div class="value text-success">${{ total_deposits|floatformat:2 }}</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Total Withdrawals</h6>
+                    <div class="value text-danger">${{ total_withdrawals|floatformat:2 }}</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Net Amount</h6>
+                    <div class="value {% if net_amount >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        ${{ net_amount|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Account</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td>{{ transaction.transaction_date|date:"Y-m-d" }}</td>
+                        <td>{{ transaction.get_transaction_type_display }}</td>
+                        <td>{{ transaction.account.name }}</td>
+                        <td>{{ transaction.description }}</td>
+                        <td class="{% if transaction.transaction_type == 'deposit' %}text-success{% else %}text-danger{% endif %}">
+                            {% if transaction.transaction_type == 'deposit' %}+{% else %}-{% endif %}${{ transaction.amount|floatformat:2 }}
+                        </td>
+                        <td>{{ transaction.category.name|default:"Uncategorized" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No transactions found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        
+        {% elif report_type == 'invoices' %}
+            <div class="report-summary">
+                <div class="summary-card">
+                    <h6>Total Amount</h6>
+                    <div class="value">${{ total_amount|floatformat:2 }}</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Total Paid</h6>
+                    <div class="value text-success">${{ total_paid|floatformat:2 }}</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Outstanding</h6>
+                    <div class="value text-warning">${{ total_outstanding|floatformat:2 }}</div>
+                </div>
+            </div>
+            <!-- Invoice table would go here -->
+        
+        {% elif report_type == 'expenses' %}
+            <div class="report-summary">
+                <div class="summary-card">
+                    <h6>Total Expenses</h6>
+                    <div class="value text-danger">${{ total_amount|floatformat:2 }}</div>
+                </div>
+            </div>
+            <!-- Expense table would go here -->
+        
+        {% elif report_type == 'payments' %}
+            <div class="report-summary">
+                <div class="summary-card">
+                    <h6>Total Payments</h6>
+                    <div class="value text-success">${{ total_amount|floatformat:2 }}</div>
+                </div>
+            </div>
+            <!-- Payment table would go here -->
+        
+        {% elif report_type == 'balance_sheet' %}
+            <div class="report-summary">
+                <div class="summary-card">
+                    <h6>Total Assets</h6>
+                    <div class="value text-success">${{ total_assets|floatformat:2 }}</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Total Liabilities</h6>
+                    <div class="value text-danger">${{ total_liabilities|floatformat:2 }}</div>
+                </div>
+                <div class="summary-card">
+                    <h6>Total Equity</h6>
+                    <div class="value">${{ total_equity|floatformat:2 }}</div>
+                </div>
+            </div>
+            <!-- Balance sheet details would go here -->
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    function selectReportType(type) {
+        var form = document.createElement('form');
+        form.method = 'GET';
+        form.action = window.location.pathname;
+        
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'report_type';
+        input.value = type;
+        form.appendChild(input);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+{% endblock %}

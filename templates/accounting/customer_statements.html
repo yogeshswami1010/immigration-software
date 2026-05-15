@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<style>
+    .statements-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: #fff;
+    }
+    .statements-header {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .statements-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+        color: #212529;
+    }
+    .statements-header a {
+        color: #0d6efd;
+        text-decoration: none;
+        font-size: 14px;
+    }
+    .controls-section {
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+    .controls-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr auto auto;
+        gap: 15px;
+        align-items: end;
+    }
+    .control-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .control-group label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    .control-group select,
+    .control-group input {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .actions-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .statement-content {
+        padding: 30px;
+    }
+    .statement-header-info {
+        margin-bottom: 30px;
+    }
+    .statement-header-info h2 {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0 0 10px 0;
+    }
+    .statement-header-info .subtitle {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    .statement-summary {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 30px;
+    }
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+    }
+    .summary-row.highlight {
+        background: #e7f1ff;
+        padding: 15px;
+        border-radius: 4px;
+        margin-top: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #0d6efd;
+    }
+    .summary-row.overdue {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    .invoices-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+    }
+    .invoices-table thead {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .invoices-table th {
+        padding: 12px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+    .invoices-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .invoices-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+    .invoice-link {
+        color: #0d6efd;
+        text-decoration: none;
+    }
+    .invoice-link:hover {
+        text-decoration: underline;
+    }
+    .overdue-badge {
+        color: #dc3545;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .statement-footer {
+        text-align: center;
+        padding: 20px;
+        color: #6c757d;
+        font-size: 12px;
+    }
+</style>
+{% endblock %}
+{% block main %}
+
+<div class="statements-container">
+    <div class="statements-header">
+        <h1>Customer Statements</h1>
+        <a href="#" target="_blank">How does this work? <i class="feather-external-link"></i></a>
+    </div>
+
+    <div class="controls-section">
+        <form method="get" id="statementForm">
+            <div class="controls-row">
+                <div class="control-group">
+                    <label>Customer</label>
+                    <select name="customer" id="customerSelect" class="form-select" required>
+                        <option value="">Select Customer</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}" {% if customer_id == customer.id|stringformat:"s" %}selected{% endif %}>{{ customer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Type</label>
+                    <select name="type" class="form-select">
+                        <option value="outstanding" selected>Outstanding invoices</option>
+                        <option value="all">All invoices</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button type="button" class="btn btn-outline-primary" id="refreshBtn">Refresh</button>
+                </div>
+            </div>
+            <div class="actions-row">
+                <button type="button" class="btn btn-outline-secondary">
+                    More actions <i class="feather-chevron-down"></i>
+                </button>
+                <button type="button" class="btn btn-primary" id="sendStatementBtn">Send statement</button>
+            </div>
+        </form>
+    </div>
+
+    {% if customer %}
+    <div class="statement-content">
+        <div class="statement-header-info">
+            <h2>Statement of Account</h2>
+            <div class="subtitle">Outstanding invoices</div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <strong>New Balance Immigration</strong><br>
+            Unit-08<br>
+            315 Tranmere Drive<br>
+            Mississauga, Ontario L5S 1T7<br>
+            Canada
+        </div>
+
+        <div class="statement-summary">
+            <div class="summary-row">
+                <span>Canadian dollar (CAD)</span>
+            </div>
+            <div class="summary-row">
+                <span>As of {{ today|date:"M d, Y" }}</span>
+            </div>
+            <div class="summary-row overdue">
+                <span>Overdue: ${{ overdue_amount|floatformat:2 }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Not yet due: ${{ not_due_amount|default:"0.00"|floatformat:2 }}</span>
+            </div>
+            <div class="summary-row highlight">
+                <span>Outstanding balance (CAD)</span>
+                <span>${{ customer.get_balance|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <table class="invoices-table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Invoice date</th>
+                    <th>Due date</th>
+                    <th>Total</th>
+                    <th>Paid</th>
+                    <th>Due</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in invoices %}
+                <tr>
+                    <td>
+                        <a href="{% url 'accounting_invoice_view' invoice.id %}" class="invoice-link">
+                            Invoice {{ invoice.invoice_number }}
+                        </a>
+                    </td>
+                    <td>{{ invoice.invoice_date|date:"M d, Y" }}</td>
+                    <td>
+                        {{ invoice.due_date|date:"M d, Y" }}
+                        {% if invoice.due_date < today and invoice.get_balance > 0 %}
+                        <div class="overdue-badge">Overdue</div>
+                        {% endif %}
+                    </td>
+                    <td>${{ invoice.total_amount|floatformat:2 }}</td>
+                    <td>${{ invoice.get_paid_amount|floatformat:2 }}</td>
+                    <td>${{ invoice.get_balance|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 30px; color: #6c757d;">
+                        No outstanding invoices found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if invoices %}
+        <div class="statement-summary">
+            <div class="summary-row highlight">
+                <span>Outstanding balance (CAD)</span>
+                <span>${{ customer.get_balance|floatformat:2 }}</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="statement-footer">
+            Powered by wave
+        </div>
+    </div>
+    {% else %}
+    <div class="statement-content" style="text-align: center; padding: 60px 20px; color: #6c757d;">
+        <p>Select a customer to view their statement</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $('#customerSelect').select2({
+            width: '100%',
+            theme: 'bootstrap-5',
+            placeholder: 'Select Customer'
+        });
+
+        $('#customerSelect').on('change', function() {
+            $('#statementForm').submit();
+        });
+
+        $('#refreshBtn').on('click', function() {
+            $('#statementForm').submit();
+        });
+
+        $('#sendStatementBtn').on('click', function() {
+            if (!$('#customerSelect').val()) {
+                alert('Please select a customer first');
+                return;
+            }
+            // Implement send statement functionality
+            alert('Send statement functionality - to be implemented');
+        });
+    });
+</script>
+{% endblock %}
