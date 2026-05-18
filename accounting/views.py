@@ -1489,7 +1489,16 @@ def reports(request):
         'invoice_status': invoice_status,
         'expense_status': expense_status,
         'accounts': Account.objects.filter(is_active=True),
-        'customers': customer.objects.filter(is_active=True),
+        'customers': [
+            {
+                'id': app.id,
+                'name': (
+                    f"{(app.f_name or '').strip()} {(app.l_name or '').strip()}".strip()
+                    or app.client_id
+                ),
+            }
+            for app in Applicant.objects.all().order_by('f_name', 'l_name', 'client_id')
+        ],
         'OPENPYXL_AVAILABLE': OPENPYXL_AVAILABLE,
         'REPORTLAB_AVAILABLE': REPORTLAB_AVAILABLE,
     }
@@ -1530,7 +1539,7 @@ def generate_report_data(report_type, filters):
         if customer_id:
             revenue_query = revenue_query.filter(invoice__customer_id=customer_id)
         
-        revenue_items = revenue_query.select_related('invoice', 'product_service')
+        revenue_items = revenue_query.select_related('invoice', 'service')
         total_revenue = sum(item.line_total for item in revenue_items)
         
         # Expenses
@@ -1577,7 +1586,7 @@ def generate_report_data(report_type, filters):
         }
     
     elif report_type == 'invoices':
-        query = Invoice.objects.select_related('customer').filter(
+        query = Invoice.objects.select_related('applicant'). filter(
             invoice_date__gte=date_from,
             invoice_date__lte=date_to
         )
@@ -1616,7 +1625,7 @@ def generate_report_data(report_type, filters):
         }
     
     elif report_type == 'payments':
-        query = Payment.objects.select_related('customer', 'invoice', 'account').filter(
+        query = Payment.objects.select_related('applicant', 'invoice', 'account').filter(
             payment_date__gte=date_from,
             payment_date__lte=date_to
         )
