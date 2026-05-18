@@ -1489,7 +1489,7 @@ def reports(request):
         'invoice_status': invoice_status,
         'expense_status': expense_status,
         'accounts': Account.objects.filter(is_active=True),
-        'customers': Customer.objects.filter(is_active=True),
+        'customers': customer.objects.filter(is_active=True),
         'OPENPYXL_AVAILABLE': OPENPYXL_AVAILABLE,
         'REPORTLAB_AVAILABLE': REPORTLAB_AVAILABLE,
     }

@@ -32,31 +32,41 @@
                             <select name="customer" id="customerSelect" class="form-select select2" required>
                                 <option value="">Select Customer</option>
                                 {% for customer in customers %}
-                                <option value="{{ customer.id }}" {% if selected_invoice and selected_invoice.customer.id == customer.id %}selected{% endif %}>{{ customer.name }}</option>
+                                <option value="{{ customer.id }}"
+                                    {% if selected_invoice and selected_invoice.applicant_id == customer.id %}selected{% endif %}>
+                                    {{ customer.name }}
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Invoice (Optional)</label>
                             <select name="invoice" id="invoiceSelect" class="form-select select2">
                                 <option value="">Select Invoice</option>
                                 {% for invoice in invoices %}
-                                <option value="{{ invoice.id }}" data-customer="{{ invoice.customer.id }}" {% if selected_invoice and selected_invoice.id == invoice.id %}selected{% endif %}>{{ invoice.invoice_number }} - Balance: ${{ invoice.get_balance|floatformat:2 }}</option>
+                                <option value="{{ invoice.id }}"
+                                    data-customer="{{ invoice.applicant_id }}"
+                                    data-balance="{{ invoice.get_balance }}"
+                                    {% if selected_invoice and selected_invoice.id == invoice.id %}selected{% endif %}>
+                                    {{ invoice.invoice_number }} - Balance: ${{ invoice.get_balance|floatformat:2 }}
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Payment Date <span class="text-danger">*</span></label>
                             <input type="date" name="payment_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Amount <span class="text-danger">*</span></label>
-                            <input type="number" name="amount" id="amountInput" class="form-control" step="0.01" min="0.01" required>
+                            <input type="number" name="amount" id="amountInput" class="form-control" step="0.01" min="0.01"
+                                value="{% if selected_invoice %}{{ selected_invoice.get_balance|floatformat:2 }}{% endif %}"
+                                required>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Payment Method <span class="text-danger">*</span></label>
                             <select name="payment_method" class="form-select" required>
@@ -69,12 +79,12 @@
                                 <option value="other">Other</option>
                             </select>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Reference Number</label>
                             <input type="text" name="reference_number" class="form-control">
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Account</label>
                             <select name="account" class="form-select select2">
@@ -84,12 +94,12 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Notes</label>
                             <textarea name="notes" class="form-control" rows="3"></textarea>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <button type="submit" class="btn btn-primary w-100">Record Payment</button>
@@ -109,41 +119,56 @@
 
 {% block script %}
 <script>
-    $(document).ready(function() {
-        // Initialize Select2
-        $('.select2').select2({
-            width: '100%',
-            theme: 'bootstrap-5'
-        });
-        
-        var invoiceId = new URLSearchParams(window.location.search).get('invoice');
-        if (invoiceId) {
-            $('#invoiceSelect').val(invoiceId).trigger('change');
-        }
-        
-        // Filter invoices by customer
-        $('#customerSelect').on('change', function() {
-            var customerId = $(this).val();
-            $('#invoiceSelect option').each(function() {
-                var invoiceCustomerId = $(this).data('customer');
-                if (customerId && invoiceCustomerId && invoiceCustomerId != customerId) {
-                    $(this).hide();
-                } else {
-                    $(this).show();
-                }
-            });
-            $('#invoiceSelect').trigger('change');
-        });
-        
-        // Set amount from invoice balance
-        $('#invoiceSelect').on('change', function() {
-            var selectedText = $(this).find('option:selected').text();
-            var match = selectedText.match(/Balance: \$([\d.]+)/);
-            if (match) {
-                $('#amountInput').val(match[1]);
+$(document).ready(function () {
+
+    // ── 1. Init Select2 ──────────────────────────────────────────────
+    $('.select2').select2({ width: '100%', theme: 'bootstrap-5' });
+
+    // ── 2. Tell Select2 to reflect the server-rendered `selected` attrs ──
+    //    (Select2 ignores native `selected` until you trigger this)
+    $('#customerSelect').trigger('change.select2');
+    $('#invoiceSelect').trigger('change.select2');
+
+    // ── 3. Filter invoices when customer changes ─────────────────────
+    $('#customerSelect').on('change', function () {
+        var customerId = $(this).val();
+
+        $('#invoiceSelect option').each(function () {
+            var optCustomer = $(this).data('customer');
+            if (customerId && optCustomer && String(optCustomer) !== String(customerId)) {
+                $(this).prop('disabled', true);
+            } else {
+                $(this).prop('disabled', false);
             }
         });
+
+        // Refresh Select2 dropdown so disabled options are hidden
+        $('#invoiceSelect').trigger('change.select2');
     });
+
+    // ── 4. Auto-fill customer + amount when invoice changes ──────────
+    $('#invoiceSelect').on('change', function () {
+        var $selected = $(this).find('option:selected');
+        var customerId = $selected.data('customer');
+        var balance    = $selected.data('balance');
+
+        // Fill customer
+        if (customerId) {
+            $('#customerSelect').val(customerId).trigger('change.select2');
+        }
+
+        // Fill amount
+        if (balance) {
+            $('#amountInput').val(parseFloat(balance).toFixed(2));
+        }
+    });
+
+    // ── 5. On page load: if invoice is pre-selected, fire its change ─
+    //    This handles ?invoice=8 — triggers steps above automatically
+    if ($('#invoiceSelect').val()) {
+        $('#invoiceSelect').trigger('change');
+    }
+
+});
 </script>
 {% endblock %}
-
