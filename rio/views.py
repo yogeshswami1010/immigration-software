@@ -564,9 +564,6 @@ def add_applicant(request):
             new_applicant.payment_completed = True
             new_applicant.save()
 
-        # Automatically create an initial accounting invoice for this applicant.
-        # This keeps accounting and applicant fee data in sync and ensures that
-        # tax is only applied on the application fee by default.
         try:
             from decimal import Decimal
             from rio_imm.accounting.models import (
@@ -576,12 +573,10 @@ def add_applicant(request):
                 BusinessInfo,
             )
 
-            # Business settings and dates
             business = BusinessInfo.get_current()
             today = date.today()
             due_date = today + timedelta(days=business.default_due_days)
 
-            # Generate invoice number (reuse accounting logic / format RI000001)
             last_invoice = AccountingInvoice.objects.order_by('-id').first()
             if last_invoice and last_invoice.invoice_number:
                 try:
@@ -590,7 +585,6 @@ def add_applicant(request):
                         last_num = int(inv_num[3:])
                         invoice_number = f"RI{last_num + 1:05d}"
                     elif inv_num.upper().startswith('NB'):
-                        # Support legacy NB-prefixed invoices
                         last_num = int(inv_num[2:])
                         invoice_number = f"RI{last_num + 1:05d}"
                     else:
@@ -601,8 +595,6 @@ def add_applicant(request):
             else:
                 invoice_number = "RI000001"
 
-            # Determine tax rate: prefer default TaxSlab, otherwise infer from
-            # applicant tax/application fee if available.
             default_slab = TaxSlab.objects.filter(is_active=True, is_default=True).first()
             if default_slab:
                 tax_rate = default_slab.rate
@@ -616,7 +608,6 @@ def add_applicant(request):
             else:
                 tax_rate = Decimal('0.00')
 
-            # Create the invoice in draft status
             auto_invoice = AccountingInvoice.objects.create(
                 invoice_number=invoice_number,
                 applicant=new_applicant,
@@ -632,7 +623,6 @@ def add_applicant(request):
                 created_by=request.user,
             )
 
-            # Application fee line (taxable)
             if new_applicant.application_fee_amount and new_applicant.application_fee_amount > 0:
                 AccountingInvoiceItem.objects.create(
                     invoice=auto_invoice,
@@ -644,7 +634,6 @@ def add_applicant(request):
                     is_taxable=True,
                 )
 
-            # Biometric fee line (non-taxable)
             if new_applicant.biometric_fee_amount and new_applicant.biometric_fee_amount > 0:
                 AccountingInvoiceItem.objects.create(
                     invoice=auto_invoice,
@@ -656,7 +645,6 @@ def add_applicant(request):
                     is_taxable=False,
                 )
 
-            # Client retained amount / service fee line (non-taxable by default)
             if new_applicant.client_retained_amount and new_applicant.client_retained_amount > 0:
                 AccountingInvoiceItem.objects.create(
                     invoice=auto_invoice,
@@ -668,11 +656,9 @@ def add_applicant(request):
                     is_taxable=False,
                 )
 
-            # Ensure totals/tax are computed according to the new rules
             auto_invoice.discount_amount = Decimal('0.00')
             auto_invoice.calculate_totals()
         except Exception:
-            # Never block applicant creation if accounting invoice generation fails.
             pass
 
         checklists = CheckList.objects.filter(services=application_type)
@@ -682,41 +668,14 @@ def add_applicant(request):
                 applicant=new_applicant,
                 assigned_by=request.user
             )
-        recipients_email = [rcic.email]
-        managers_email = list(
-            Profile.objects.filter(role__in=["manager", "admin"]).values_list('user__email', flat=True))
-        recipients_email += managers_email
-        email_body = f"""
-        We would like to inform you that a new applicant has been successfully added to the system. Please find the details below:
-        <br><br>
-        <b>Client ID</b>: {new_applicant.client_id}<br>
-        <b>Applicant Name</b>: {new_applicant.f_name} {new_applicant.m_name} {new_applicant.l_name}<br>
-        <b>Email</b>: {new_applicant.email}<br>
-        <b>Phone</b>: {new_applicant.phone}<br>
-        <b>Date of Birth</b>: {new_applicant.dob}<br>
-        <b>Address</b>: {new_applicant.address}<br>
 
-        <b>Application Type</b>: {new_applicant.application_type}<br>
-        <b>Application Fee Amount</b>: {new_applicant.application_fee_amount}<br>
-        <b>Biometric Fee Amount</b>: {new_applicant.biometric_fee_amount}<br>
-        <b>Client Retained Amount</b>: {new_applicant.client_retained_amount}<br>
-        <b>Total Fee Amount</b>: {new_applicant.total_fee_amount}<br>
-        <b>Balance Amount</b>: {new_applicant.balance_amount}<br>
-        <b>Advance Amount</b>: {new_applicant.advance_amount}<br>
-        <br><br>
-        The applicant is currently in the <b>Pending</b> status. Please log in to the system for further actions and to view more details.<br><br>
-        """
-
-        NotificationService.send_email_notification(f"New Applicant Added - {new_applicant.client_id}", email_body,
-                                                    recipients_email)
         messages.success(request,
-                         f'Applicant added successfully. Client ID is {new_applicant.client_id}, Email to managers has been sent.')
+                         f'Applicant added successfully. Client ID is {new_applicant.client_id}.')
         return redirect('add_applicant')
 
     rcic = Profile.objects.filter(is_rcic=True)
     services_type = Services.objects.filter(is_active=True)
     return render(request, 'add_applicant.html', {'services': services_type, 'rcic': rcic})
-
 
 @login_required
 def view_applicant(request, id):
