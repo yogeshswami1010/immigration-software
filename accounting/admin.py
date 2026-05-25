@@ -47,7 +47,7 @@ class InvoiceItemInline(admin.TabularInline):
 
 @admin.register(Invoice)
 class InvoiceAdmin(SimpleHistoryAdmin):
-    list_display = ['invoice_number', 'applicant', 'invoice_date', 'due_date', 'total_amount', 'status', 'created_at']
+    list_display = ['id', 'invoice_number', 'applicant', 'invoice_date', 'due_date', 'total_amount', 'status', 'created_at']
     list_filter = ['status', 'invoice_date', 'created_at']
     search_fields = ['invoice_number', 'applicant__f_name', 'applicant__l_name', 'applicant__client_id', 'notes']
     readonly_fields = ['invoice_number', 'subtotal', 'tax_amount', 'total_amount', 'created_at', 'updated_at']

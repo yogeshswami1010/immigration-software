@@ -293,28 +293,28 @@ def assign_caseworker(request):
         NotificationService.send_email_notification(f"Applicant {applicant.client_id} Assigned to {caseworker}",
                                                     email_body,
                                                     recipients_email)
-        email_to_client = f"""
-        <p>Dear {applicant.f_name},
-        <br><br>
-        We are writing to inform you that your ({applicant.application_type}) application has been assigned to Case Worker and is now under review. Below are the key details of your case:
-        <br><br>
-        <b>Application Type: {applicant.application_type}</b><br>
-        <b>Case ID/Application Number: {applicant.client_id}</b> - RIO Dashboard Case Number
-        <br><br>
-        Your assigned caseworker will review your application and reach out to you if any additional information or documents are required. Please ensure your contact details are up-to-date and regularly check your email for updates regarding your application.
-        <br><br>
-        If you have any urgent questions or concerns, you can reach out to your caseworker for any further details.
-        <br><br>
-        Thank you for choosing Rio Immigration for your immigration needs. We are committed to supporting you throughout the process.
-        <br><br>
-        Best regards,<br>
-        Rio Immigration Consultancy Group<br>
-        Website: <a href="https://rioimm.ca">www.rioimm.ca</a>
-        </p>
-        """
-        NotificationService.send_email_notification(f"Update on Your Immigration Application: [{applicant.application_type}/{applicant.client_id}]",
-                                                    email_to_client,
-                                                    [applicant.email])
+        # email_to_client = f"""
+        # <p>Dear {applicant.f_name},
+        # <br><br>
+        # We are writing to inform you that your ({applicant.application_type}) application has been assigned to Case Worker and is now under review. Below are the key details of your case:
+        # <br><br>
+        # <b>Application Type: {applicant.application_type}</b><br>
+        # <b>Case ID/Application Number: {applicant.client_id}</b> - RIO Dashboard Case Number
+        # <br><br>
+        # Your assigned caseworker will review your application and reach out to you if any additional information or documents are required. Please ensure your contact details are up-to-date and regularly check your email for updates regarding your application.
+        # <br><br>
+        # If you have any urgent questions or concerns, you can reach out to your caseworker for any further details.
+        # <br><br>
+        # Thank you for choosing Rio Immigration for your immigration needs. We are committed to supporting you throughout the process.
+        # <br><br>
+        # Best regards,<br>
+        # Rio Immigration Consultancy Group<br>
+        # Website: <a href="https://rioimm.ca">www.rioimm.ca</a>
+        # </p>
+        # """
+        # NotificationService.send_email_notification(f"Update on Your Immigration Application: [{applicant.application_type}/{applicant.client_id}]",
+        #                                             email_to_client,
+        #                                             [applicant.email])
         messages.success(request,
                          f'Caseworker {caseworker.username} has been assigned to {applicant}.')
         return redirect('unassigned_applications')
@@ -496,120 +496,256 @@ def check_phone(request):
 
 @login_required
 def add_applicant(request):
+
+    print("************************************************************************")
+    print("Into the add_applicant")
+    print("************************************************************************")
+
     if request.method == 'POST':
-        f_name = request.POST.get('f_name')
-        m_name = request.POST.get('m_name')
-        l_name = request.POST.get('l_name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        address = request.POST.get('address')
-        dob = request.POST.get('dob')
-        application_type_id = request.POST.get('application_type')
-        application_fee_amount = float(request.POST.get('application_fee'))
-        biometric_fee_amount = float(request.POST.get('biometric_fee'))
-        client_retained_amount = float(request.POST.get('amount_retained', 0))
-        tax_amount = float(request.POST.get('taxes', 0))
-        total_fee_amount = float(request.POST.get('total_fee', 0))
-        balance_amount = float(request.POST.get('balance', 0))
-        advance_amount = float(request.POST.get('advance', 0))
-        r_f_name = request.POST.get('r_f_name')
-        r_m_name = request.POST.get('r_m_name')
-        r_l_name = request.POST.get('r_l_name')
-        rcic_id = request.POST.get('rcic')
-
-        application_type = Services.objects.get(id=application_type_id)
-        rcic = Profile.objects.get(user__id=rcic_id).user
-
-        now = datetime.now()
-        timestamp = int(datetime.timestamp(now))
-        client_id = f'R{timestamp}'
-
-        new_applicant = Applicant(
-            address=address,
-            added_by=request.user,
-            client_id=client_id,
-            f_name=f_name,
-            m_name=m_name,
-            l_name=l_name,
-            email=email,
-            phone=phone,
-            dob=dob,
-            application_type=application_type.name,
-            application_fee_amount=application_fee_amount,
-            biometric_fee_amount=biometric_fee_amount,
-            client_retained_amount=client_retained_amount,
-            tax_amount=tax_amount,
-            total_fee_amount=total_fee_amount,
-            balance_amount=balance_amount,
-            advance_amount=advance_amount,
-            status="Pending",
-            r_f_name=r_f_name,
-            r_m_name=r_m_name,
-            r_l_name=r_l_name,
-            rcic=rcic
-        )
-        new_applicant.save()
-        agreement = generate_agreement(new_applicant)
-        new_applicant.service_agreement = agreement
-        new_applicant.save()
-        if advance_amount > 0:
-            payment = Payments(
-                applicant=new_applicant,
-                added_by=request.user,
-                amount=advance_amount
-            )
-            payment.save()
-
-        if new_applicant.balance_amount == 0:
-            new_applicant.payment_completed = True
-            new_applicant.save()
 
         try:
+
             from decimal import Decimal
-            from rio_imm.accounting.models import (
+            from datetime import datetime, date, timedelta
+
+            from django.db import transaction
+
+            from accounting.models import (
                 Invoice as AccountingInvoice,
                 InvoiceItem as AccountingInvoiceItem,
                 TaxSlab,
                 BusinessInfo,
             )
 
+            print("************************************************************************")
+            print("Into the POST")
+            print("************************************************************************")
+
+            # =========================
+            # FORM DATA
+            # =========================
+
+            f_name = request.POST.get('f_name')
+            m_name = request.POST.get('m_name')
+            l_name = request.POST.get('l_name')
+            email = request.POST.get('email')
+            phone = request.POST.get('phone')
+            address = request.POST.get('address')
+            dob = request.POST.get('dob')
+
+            application_type_id = request.POST.get('application_type')
+
+            application_fee_amount = float(
+                request.POST.get('application_fee', 0)
+            )
+
+            biometric_fee_amount = float(
+                request.POST.get('biometric_fee', 0)
+            )
+
+            client_retained_amount = float(
+                request.POST.get('amount_retained', 0)
+            )
+
+            tax_amount = float(
+                request.POST.get('taxes', 0)
+            )
+
+            total_fee_amount = float(
+                request.POST.get('total_fee', 0)
+            )
+
+            balance_amount = float(
+                request.POST.get('balance', 0)
+            )
+
+            advance_amount = float(
+                request.POST.get('advance', 0)
+            )
+
+            r_f_name = request.POST.get('r_f_name')
+            r_m_name = request.POST.get('r_m_name')
+            r_l_name = request.POST.get('r_l_name')
+
+            rcic_id = request.POST.get('rcic')
+
+            # =========================
+            # RELATED OBJECTS
+            # =========================
+
+            application_type = Services.objects.get(
+                id=application_type_id
+            )
+
+            rcic = Profile.objects.get(
+                user__id=rcic_id
+            ).user
+
+            # =========================
+            # CLIENT ID
+            # =========================
+
+            now = datetime.now()
+            timestamp = int(datetime.timestamp(now))
+
+            client_id = f'R{timestamp}'
+
+            # =========================
+            # CREATE APPLICANT
+            # =========================
+
+            print("************************************************************************")
+            print("Before Applicant creation")
+            print("************************************************************************")
+
+            new_applicant = Applicant.objects.create(
+                address=address,
+                added_by=request.user,
+                client_id=client_id,
+                f_name=f_name,
+                m_name=m_name,
+                l_name=l_name,
+                email=email,
+                phone=phone,
+                dob=dob,
+                application_type=application_type.name,
+                application_fee_amount=application_fee_amount,
+                biometric_fee_amount=biometric_fee_amount,
+                client_retained_amount=client_retained_amount,
+                tax_amount=tax_amount,
+                total_fee_amount=total_fee_amount,
+                balance_amount=balance_amount,
+                advance_amount=advance_amount,
+                status="Pending",
+                r_f_name=r_f_name,
+                r_m_name=r_m_name,
+                r_l_name=r_l_name,
+                rcic=rcic
+            )
+
+            print("************************************************************************")
+            print("Applicant created")
+            print("************************************************************************")
+
+            # =========================
+            # GENERATE AGREEMENT
+            # =========================
+
+            agreement = generate_agreement(new_applicant)
+
+            new_applicant.service_agreement = agreement
+            new_applicant.save()
+
+            print("************************************************************************")
+            print("Agreement generated")
+            print("************************************************************************")
+
+            # =========================
+            # ADVANCE PAYMENT
+            # =========================
+
+            if advance_amount > 0:
+
+                Payments.objects.create(
+                    applicant=new_applicant,
+                    added_by=request.user,
+                    amount=advance_amount
+                )
+
+            print("************************************************************************")
+            print("Advance payment recorded")
+            print("************************************************************************")
+
+            # =========================
+            # PAYMENT STATUS
+            # =========================
+
+            if new_applicant.balance_amount == 0:
+
+                new_applicant.payment_completed = True
+                new_applicant.save()
+
+            # =========================
+            # INVOICE CREATION
+            # =========================
+
+            print("************************************************************************")
+            print("Invoice creation started")
+            print("************************************************************************")
+
             business = BusinessInfo.get_current()
+
             today = date.today()
-            due_date = today + timedelta(days=business.default_due_days)
 
-            last_invoice = AccountingInvoice.objects.order_by('-id').first()
-            if last_invoice and last_invoice.invoice_number:
-                try:
-                    inv_num = last_invoice.invoice_number
-                    if inv_num.upper().startswith('RI'):
-                        last_num = int(inv_num[3:])
-                        invoice_number = f"RI{last_num + 1:05d}"
-                    elif inv_num.upper().startswith('NB'):
-                        last_num = int(inv_num[2:])
-                        invoice_number = f"RI{last_num + 1:05d}"
-                    else:
-                        last_num = int(inv_num.split('-')[-1])
-                        invoice_number = f"RI{last_num + 1:05d}"
-                except Exception:
-                    invoice_number = "RI000001"
-            else:
-                invoice_number = "RI000001"
+            due_date = today + timedelta(
+                days=business.default_due_days
+            )
 
-            default_slab = TaxSlab.objects.filter(is_active=True, is_default=True).first()
+            # =========================
+            # TAX RATE
+            # =========================
+
+            default_slab = TaxSlab.objects.filter(
+                is_active=True,
+                is_default=True
+            ).first()
+
             if default_slab:
+
                 tax_rate = default_slab.rate
-            elif new_applicant.application_fee_amount and new_applicant.tax_amount:
+
+            elif (
+                new_applicant.application_fee_amount and
+                new_applicant.tax_amount
+            ):
+
                 try:
+
                     tax_rate = (
-                        Decimal(str(new_applicant.tax_amount)) * Decimal('100.00')
-                    ) / Decimal(str(new_applicant.application_fee_amount))
+                        Decimal(str(new_applicant.tax_amount))
+                        * Decimal('100.00')
+                    ) / Decimal(
+                        str(new_applicant.application_fee_amount)
+                    )
+
                 except Exception:
+
                     tax_rate = Decimal('0.00')
+
             else:
+
                 tax_rate = Decimal('0.00')
 
+
+           # =========================
+            # SAFE INVOICE CREATION
+            # =========================
+
+            import re
+
+            # Get all invoice numbers, find true numeric maximum in Python
+            all_numbers = list(
+                AccountingInvoice.objects
+                .values_list('invoice_number', flat=True)
+            )
+
+            last_num = 0
+            for num_str in all_numbers:
+                if num_str and re.match(r'^RI\d+$', num_str):
+                    n = int(num_str[2:])  # strip 'RI' prefix, convert rest to int
+                    if n > last_num:
+                        last_num = n
+
+            last_num += 1
+            candidate = f"RI{last_num:05d}"
+
+            # Safety check - keep incrementing until we find a free number
+            while AccountingInvoice.objects.filter(invoice_number=candidate).exists():
+                last_num += 1
+                candidate = f"RI{last_num:05d}"
+
             auto_invoice = AccountingInvoice.objects.create(
-                invoice_number=invoice_number,
+                invoice_number=candidate,
                 applicant=new_applicant,
                 invoice_date=today,
                 due_date=due_date,
@@ -623,59 +759,164 @@ def add_applicant(request):
                 created_by=request.user,
             )
 
-            if new_applicant.application_fee_amount and new_applicant.application_fee_amount > 0:
+            print("************************************************************************")
+            print(
+                auto_invoice.invoice_number,
+                "Invoice created successfully"
+            )
+            print("************************************************************************")
+
+            # =========================
+            # APPLICATION FEE ITEM
+            # =========================
+
+            if (
+                new_applicant.application_fee_amount and
+                new_applicant.application_fee_amount > 0
+            ):
+
                 AccountingInvoiceItem.objects.create(
                     invoice=auto_invoice,
                     service=None,
-                    description=f'Application fee for {new_applicant.application_type or "service"}',
+                    description=(
+                        f'Application fee for '
+                        f'{new_applicant.application_type or "service"}'
+                    ),
                     quantity=Decimal('1.00'),
-                    unit_price=Decimal(str(new_applicant.application_fee_amount)),
+                    unit_price=Decimal(
+                        str(
+                            new_applicant.application_fee_amount
+                        )
+                    ),
                     tax_rate=Decimal('0.00'),
                     is_taxable=True,
                 )
 
-            if new_applicant.biometric_fee_amount and new_applicant.biometric_fee_amount > 0:
+            # =========================
+            # BIOMETRIC FEE ITEM
+            # =========================
+
+            if (
+                new_applicant.biometric_fee_amount and
+                new_applicant.biometric_fee_amount > 0
+            ):
+
                 AccountingInvoiceItem.objects.create(
                     invoice=auto_invoice,
                     service=None,
                     description='Biometric fee',
                     quantity=Decimal('1.00'),
-                    unit_price=Decimal(str(new_applicant.biometric_fee_amount)),
+                    unit_price=Decimal(
+                        str(
+                            new_applicant.biometric_fee_amount
+                        )
+                    ),
                     tax_rate=Decimal('0.00'),
                     is_taxable=False,
                 )
 
-            if new_applicant.client_retained_amount and new_applicant.client_retained_amount > 0:
+            # =========================
+            # RETAINED AMOUNT ITEM
+            # =========================
+
+            if (
+                new_applicant.client_retained_amount and
+                new_applicant.client_retained_amount > 0
+            ):
+
                 AccountingInvoiceItem.objects.create(
                     invoice=auto_invoice,
                     service=None,
-                    description=f'Service fee for {new_applicant.application_type or "service"}',
+                    description=(
+                        f'Service fee for '
+                        f'{new_applicant.application_type or "service"}'
+                    ),
                     quantity=Decimal('1.00'),
-                    unit_price=Decimal(str(new_applicant.client_retained_amount)),
+                    unit_price=Decimal(
+                        str(
+                            new_applicant.client_retained_amount
+                        )
+                    ),
                     tax_rate=Decimal('0.00'),
                     is_taxable=False,
                 )
 
-            auto_invoice.discount_amount = Decimal('0.00')
-            auto_invoice.calculate_totals()
-        except Exception:
-            pass
+            # =========================
+            # CALCULATE TOTALS1212
+            # =========================
 
-        checklists = CheckList.objects.filter(services=application_type)
-        for checklist in checklists:
-            CheckListAssignment.objects.create(
-                item=checklist,
-                applicant=new_applicant,
-                assigned_by=request.user
+            auto_invoice.discount_amount = Decimal('0.00')
+
+            auto_invoice.calculate_totals()
+
+            print("************************************************************************")
+            print("Invoice totals calculated")
+            print("************************************************************************")
+
+            # =========================
+            # CHECKLIST ASSIGNMENT
+            # =========================
+
+            checklists = CheckList.objects.filter(
+                services=application_type
             )
 
-        messages.success(request,
-                         f'Applicant added successfully. Client ID is {new_applicant.client_id}.')
-        return redirect('add_applicant')
+            for checklist in checklists:
+
+                CheckListAssignment.objects.create(
+                    item=checklist,
+                    applicant=new_applicant,
+                    assigned_by=request.user
+                )
+
+            # =========================
+            # SUCCESS MESSAGE
+            # =========================
+
+            messages.success(
+                request,
+                f'Applicant added successfully. '
+                f'Client ID is {new_applicant.client_id}. '
+                f'Invoice Number is {auto_invoice.invoice_number}.'
+            )
+
+            return redirect('add_applicant')
+
+        except Exception as e:
+
+                    import traceback
+
+                    print("************************************************************************")
+                    print("ERROR OCCURRED")
+                    print(str(e))
+                    traceback.print_exc()
+                    print("************************************************************************")
+
+                    messages.error(
+                            request,
+                            f"Error occurred: {str(e)}"
+                        )
+
+                    return redirect('add_applicant')
+
+    # =========================
+    # GET REQUEST
+    # =========================
 
     rcic = Profile.objects.filter(is_rcic=True)
-    services_type = Services.objects.filter(is_active=True)
-    return render(request, 'add_applicant.html', {'services': services_type, 'rcic': rcic})
+
+    services_type = Services.objects.filter(
+        is_active=True
+    )
+
+    return render(
+        request,
+        'add_applicant.html',
+        {
+            'services': services_type,
+            'rcic': rcic
+        }
+    )
 
 @login_required
 def view_applicant(request, id):

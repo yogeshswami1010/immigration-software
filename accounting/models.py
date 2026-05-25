@@ -129,7 +129,12 @@ class Invoice(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     
-    invoice_number = models.CharField(max_length=50, unique=True)
+    invoice_number = models.CharField(
+        max_length=50,
+        unique=True,
+        null=True,
+        blank=True
+    )
     applicant = models.ForeignKey('rio.Applicant', on_delete=models.CASCADE, related_name='invoices')
     invoice_date = models.DateField()
     due_date = models.DateField()

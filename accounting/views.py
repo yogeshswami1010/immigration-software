@@ -572,11 +572,39 @@ def send_invoice(request, invoice_id):
                         email_body = email_body.replace('</p>', notes_section + '</p>', 1)
         
         # Send email
-        NotificationService.send_email_notification(
+       # Generate PDF from the existing standalone preview template
+        from django.template.loader import render_to_string
+        from django.core.mail import EmailMessage
+        from weasyprint import HTML
+        import io
+
+        html_string = render_to_string('accounting/invoice_preview_standalone.html', {
+            'invoice': invoice,
+            'business': business,
+            'today': timezone.now().date(),
+        })
+
+        pdf_file = io.BytesIO()
+        HTML(
+            string=html_string,
+            base_url=request.build_absolute_uri('/')  # needed so logo img src resolves
+        ).write_pdf(pdf_file)
+        pdf_file.seek(0)
+
+        # Send email with PDF attached
+        email_msg = EmailMessage(
             subject=subject,
             body=email_body,
-            recipients=[applicant_email]
+            from_email="DONOTREPLY@rioimm.ca", 
+            to=[applicant_email],
         )
+        email_msg.content_subtype = 'html'  # send body as HTML
+        email_msg.attach(
+            f"Invoice_{invoice.invoice_number}.pdf",
+            pdf_file.read(),
+            'application/pdf',
+        )
+        email_msg.send()
         
         # Change status to 'sent'
         invoice.status = 'sent'

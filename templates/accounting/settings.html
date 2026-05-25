@@ -295,6 +295,26 @@
                         </div>
                     </div>
                     
+                    <!-- Attach Invoice PDF -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input 
+                                type="checkbox" 
+                                name="attach_invoice_pdf_{{ template.id }}" 
+                                class="form-check-input" 
+                                id="attach_invoice_pdf_{{ template.id }}"
+                                {% if template.attach_invoice_pdf %}checked{% endif %}
+                            >
+                            <label class="form-check-label" for="attach_invoice_pdf_{{ template.id }}">
+                                Attach Invoice PDF
+                            </label>
+                            <small class="text-muted d-block">
+                                When enabled, the invoice PDF will be automatically attached to the email.
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Active -->
                     <div class="mb-3">
                         <div class="form-check">
                             <input type="checkbox" name="is_active_{{ template.id }}" class="form-check-input" id="active_{{ template.id }}" {% if template.is_active %}checked{% endif %}>
